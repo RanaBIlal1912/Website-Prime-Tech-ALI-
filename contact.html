@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact Us | SecureNet</title>
+<link rel="icon" href="assets/img/logo.png">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<div class="page-loader" id="pageLoader"><div class="loader-ring"></div></div>
+<div class="promo-banner" id="promo-banner"></div>
+
+<nav class="navbar">
+  <a href="index.html" class="logo">
+    <img src="assets/img/logo.png" class="logo-img" alt="Logo">
+    <span class="logo-text">SecureNet</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="services.html">Services</a></li>
+    <li><a href="products.html">Products</a></li>
+    <li><a href="portfolio.html">Portfolio</a></li>
+    <li><a href="contact.html" class="active">Contact</a></li>
+  </ul>
+  <button class="menu-toggle">☰</button>
+</nav>
+
+<div class="page-header">
+  <span class="hero-badge">We'd Love to Hear From You</span>
+  <h1>Get in <span style="color:var(--primary)">Touch</span></h1>
+  <p>Send us a message or contact us directly via WhatsApp / phone.</p>
+</div>
+
+<section class="section" style="padding-top:20px;">
+  <div class="contact-grid">
+    <div class="form-box reveal">
+      <form id="contactForm">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="cf-name" required placeholder="Your name">
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="text" id="cf-phone" required placeholder="03xx-xxxxxxx">
+        </div>
+        <div class="form-group">
+          <label>Message</label>
+          <textarea id="cf-message" rows="5" required placeholder="Tell us what you need..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;">Send via WhatsApp</button>
+      </form>
+    </div>
+
+    <div class="contact-info-box reveal reveal-delay-1">
+      <div class="item">
+        <div class="label">Phone</div>
+        <div class="contact-phone"></div>
+      </div>
+      <div class="item">
+        <div class="label">Email</div>
+        <div class="contact-email"></div>
+      </div>
+      <div class="item">
+        <div class="label">Address</div>
+        <div class="contact-address"></div>
+      </div>
+      <a href="#" class="btn btn-outline whatsapp-link" target="_blank" style="width:100%;text-align:center;">Chat on WhatsApp</a>
+      <div class="social-links" style="margin-top:18px;"></div>
+      <iframe class="map-embed" loading="lazy" allowfullscreen></iframe>
+    </div>
+  </div>
+</section>
+
+<div class="site-popup" id="sitePopup"></div>
+
+<div class="float-buttons">
+  <a href="javascript:void(0)" class="float-btn quote-float" onclick="openQuoteModal()">📋 Get Quote</a>
+  <a href="#" class="float-btn call-float call-link">📞</a>
+  <a href="#" class="float-btn whatsapp-float whatsapp-link" target="_blank">💬</a>
+</div>
+
+<footer>
+  <div class="logo" style="justify-content:center;">
+    <img src="assets/img/logo.png" class="logo-img" alt="Logo">
+    <span class="logo-text">SecureNet</span>
+  </div>
+  <p class="company-desc" style="max-width:600px;margin:14px auto;"></p>
+  <div class="footer-links">
+    <a href="index.html">Home</a>
+    <a href="services.html">Services</a>
+    <a href="products.html">Products</a>
+    <a href="portfolio.html">Portfolio</a>
+    <a href="contact.html">Contact</a>
+    <a href="admin/login.html">Admin</a>
+  </div>
+  <p class="footer-text small"></p>
+</footer>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/main.js"></script>
+</body>
+</html>

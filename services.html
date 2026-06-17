@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Our Services | SecureNet</title>
+<link rel="icon" href="assets/img/logo.png">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<div class="page-loader" id="pageLoader"><div class="loader-ring"></div></div>
+<div class="promo-banner" id="promo-banner"></div>
+
+<nav class="navbar">
+  <a href="index.html" class="logo">
+    <img src="assets/img/logo.png" class="logo-img" alt="Logo">
+    <span class="logo-text">SecureNet</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="services.html" class="active">Services</a></li>
+    <li><a href="products.html">Products</a></li>
+    <li><a href="portfolio.html">Portfolio</a></li>
+    <li><a href="contact.html">Contact</a></li>
+  </ul>
+  <button class="menu-toggle">☰</button>
+</nav>
+
+<div class="page-header">
+  <span class="hero-badge">Our Expertise</span>
+  <h1>Our <span style="color:var(--primary)">Services</span></h1>
+  <p>Complete IT, networking and security services for homes & businesses.</p>
+</div>
+
+<section class="section" style="padding-top:20px;">
+  <div class="grid" id="services-all"></div>
+</section>
+
+<section class="section bg-alt">
+  <div class="cta-banner reveal">
+    <h2>Need a Custom Solution?</h2>
+    <p>Tell us your requirements and get a free consultation.</p>
+    <div class="hero-buttons">
+      <a href="#" class="btn btn-primary whatsapp-link" target="_blank">Chat on WhatsApp</a>
+      <a href="javascript:void(0)" class="btn btn-outline" onclick="openQuoteModal()">Request Site Survey</a>
+    </div>
+  </div>
+</section>
+
+<div class="site-popup" id="sitePopup"></div>
+
+<div class="float-buttons">
+  <a href="javascript:void(0)" class="float-btn quote-float" onclick="openQuoteModal()">📋 Get Quote</a>
+  <a href="#" class="float-btn call-float call-link">📞</a>
+  <a href="#" class="float-btn whatsapp-float whatsapp-link" target="_blank">💬</a>
+</div>
+
+<footer>
+  <div class="logo" style="justify-content:center;">
+    <img src="assets/img/logo.png" class="logo-img" alt="Logo">
+    <span class="logo-text">SecureNet</span>
+  </div>
+  <p class="company-desc" style="max-width:600px;margin:14px auto;"></p>
+  <div class="social-links"></div>
+  <div class="footer-links">
+    <a href="index.html">Home</a>
+    <a href="services.html">Services</a>
+    <a href="products.html">Products</a>
+    <a href="portfolio.html">Portfolio</a>
+    <a href="contact.html">Contact</a>
+    <a href="admin/login.html">Admin</a>
+  </div>
+  <p class="footer-text small"></p>
+</footer>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/main.js"></script>
+<script>
+  renderServices('services-all');
+</script>
+</body>
+</html>

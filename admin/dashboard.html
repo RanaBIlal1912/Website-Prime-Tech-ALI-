@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard | SecureNet</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<style>
+  body { display:flex; min-height:100vh; }
+  .sidebar {
+    width: 250px; background: var(--bg-card);
+    border-right: 1px solid var(--border);
+    padding: 25px 0; position: sticky; top:0; height: 100vh;
+    display:flex; flex-direction:column; overflow-y:auto;
+  }
+  .sidebar h2 { padding: 0 25px 20px; font-size: 1.2rem; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
+  .sidebar .group-label { padding: 14px 25px 6px; font-size: .7rem; text-transform:uppercase; letter-spacing:1px; color: var(--text-muted); }
+  .sidebar a {
+    display:block; padding: 11px 25px; color: var(--text-muted);
+    font-weight: 600; border-left: 3px solid transparent; transition: all .2s;
+    cursor: pointer; font-size: .92rem;
+  }
+  .sidebar a:hover, .sidebar a.active { color: var(--primary); border-left-color: var(--primary); background: rgba(0,170,255,0.06); }
+  .sidebar .logout { margin-top: auto; color: #ff5e5e; }
+  .main { flex: 1; padding: 35px; max-width: 1100px; }
+  .main h1 { margin-bottom: 25px; }
+  .tab { display: none; }
+  .tab.active { display: block; }
+
+  .admin-table { width:100%; border-collapse: collapse; margin-top: 20px; background: var(--bg-card); border-radius: 12px; overflow: hidden; }
+  .admin-table th, .admin-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); text-align:left; font-size: .9rem; }
+  .admin-table th { background: var(--bg-card-2); color: var(--primary); }
+  .admin-table img { width: 50px; height: 50px; object-fit: cover; border-radius: 6px; }
+  .admin-table .actions a { margin-right: 12px; cursor:pointer; font-weight:600; }
+  .edit-link { color: var(--primary); }
+  .delete-link { color: #ff5e5e; }
+
+  .admin-form {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 25px; margin-top: 25px; max-width: 650px;
+  }
+  .admin-form h3 { margin-bottom: 15px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+  .save-msg { color: #4ade80; font-size: .9rem; margin-top: 10px; display:none; }
+
+  .settings-section { margin-bottom: 35px; }
+  .settings-section h3 { color: var(--primary); margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+
+  /* repeatable rows (specs, gallery) */
+  .repeat-row { display:flex; gap:10px; margin-bottom:8px; align-items:center; }
+  .repeat-row input { flex:1; }
+  .repeat-row .rm-btn { color:#ff5e5e; cursor:pointer; font-weight:700; padding: 0 8px; }
+  .add-row-btn { color: var(--primary); cursor:pointer; font-weight:600; font-size:.85rem; }
+
+  /* media library */
+  .media-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: 14px; margin-top: 20px; }
+  .media-item { background: var(--bg-card); border:1px solid var(--border); border-radius: 10px; overflow:hidden; position:relative; }
+  .media-item img, .media-item video { width:100%; height:100px; object-fit:cover; }
+  .media-item .doc-icon { height:100px; display:flex; align-items:center; justify-content:center; font-size:2rem; }
+  .media-item .meta { padding: 8px; font-size:.75rem; }
+  .media-item .meta .name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .media-item .del-btn { position:absolute; top:6px; right:6px; background:rgba(255,0,0,0.7); color:#fff; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:.8rem; }
+  .media-item .copy-btn { position:absolute; top:6px; left:6px; background:rgba(0,0,0,0.6); color:#fff; border-radius:6px; padding:2px 8px; font-size:.7rem; cursor:pointer; }
+  .dropzone {
+    border: 2px dashed var(--border); border-radius: 12px; padding: 40px;
+    text-align: center; color: var(--text-muted); cursor:pointer; transition: all .2s;
+  }
+  .dropzone.dragover { border-color: var(--primary); background: rgba(0,170,255,0.06); color: var(--primary); }
+
+  .toggle-row { display:flex; align-items:center; justify-content:space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .switch { position: relative; width: 46px; height: 24px; }
+  .switch input { opacity:0; width:0; height:0; }
+  .slider-toggle { position:absolute; cursor:pointer; inset:0; background-color: var(--border); transition:.3s; border-radius:24px; }
+  .slider-toggle:before { position:absolute; content:""; height:18px; width:18px; left:3px; bottom:3px; background-color:white; transition:.3s; border-radius:50%; }
+  input:checked + .slider-toggle { background-color: var(--primary); }
+  input:checked + .slider-toggle:before { transform: translateX(22px); }
+
+  @media (max-width: 800px) {
+    body { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; flex-direction: row; overflow-x:auto; position: relative; flex-wrap:nowrap; }
+    .sidebar h2, .sidebar .group-label { display:none; }
+    .sidebar a { white-space: nowrap; border-left:none; border-bottom: 3px solid transparent; }
+    .sidebar a.active { border-bottom-color: var(--primary); }
+    .form-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <h2>⚙️ Admin Panel</h2>
+  <div class="group-label">Overview</div>
+  <a data-tab="dashboard" class="nav-tab active">📊 Dashboard</a>
+
+  <div class="group-label">Content</div>
+  <a data-tab="services" class="nav-tab">🛠️ Services</a>
+  <a data-tab="products" class="nav-tab">📦 Products</a>
+  <a data-tab="portfolio" class="nav-tab">🎥 Portfolio</a>
+  <a data-tab="testimonials" class="nav-tab">💬 Testimonials</a>
+  <a data-tab="statistics" class="nav-tab">📈 Statistics</a>
+
+  <div class="group-label">Engagement</div>
+  <a data-tab="banners" class="nav-tab">📣 Banner Manager</a>
+  <a data-tab="popups" class="nav-tab">🪧 Popup Manager</a>
+  <a data-tab="media" class="nav-tab">🖼️ Media Library</a>
+
+  <div class="group-label">Site Configuration</div>
+  <a data-tab="homepage" class="nav-tab">🏠 Homepage Manager</a>
+  <a data-tab="theme" class="nav-tab">🎨 Theme Manager</a>
+  <a data-tab="seo" class="nav-tab">🔍 SEO Manager</a>
+  <a data-tab="settings" class="nav-tab">🔧 General Settings</a>
+
+  <a class="logout" id="logoutBtn">🚪 Logout</a>
+</div>
+
+<div class="main">
+
+  <!-- ============ DASHBOARD ============ -->
+  <div class="tab active" id="tab-dashboard">
+    <h1>Welcome, Admin 👋</h1>
+    <div class="grid">
+      <div class="card"><h3 id="count-services">0</h3><p>Total Services</p></div>
+      <div class="card"><h3 id="count-products">0</h3><p>Total Products</p></div>
+      <div class="card"><h3 id="count-portfolio">0</h3><p>Portfolio Projects</p></div>
+      <div class="card"><h3 id="count-testimonials">0</h3><p>Testimonials</p></div>
+      <div class="card"><h3 id="count-media">0</h3><p>Media Files</p></div>
+      <div class="card"><h3 id="count-popups">0</h3><p>Active Popups</p></div>
+    </div>
+    <p style="margin-top:30px; color:var(--text-muted);">
+      Use the sidebar to manage every aspect of your website — content, media, popups, banners, theme, SEO and contact settings.
+      All changes save instantly and reflect on the live website.
+    </p>
+    <p style="margin-top:15px;">
+      <a href="../index.html" target="_blank" class="btn btn-outline">🌐 View Website</a>
+    </p>
+  </div>
+
+  <!-- ============ SERVICES ============ -->
+  <div class="tab" id="tab-services">
+    <h1>Manage Services</h1>
+    <button class="btn btn-primary" onclick="showServiceForm()">+ Add New Service</button>
+    <table class="admin-table">
+      <thead><tr><th>Image</th><th>Icon</th><th>Title</th><th>Actions</th></tr></thead>
+      <tbody id="services-table"></tbody>
+    </table>
+    <div class="admin-form" id="serviceForm" style="display:none;">
+      <h3 id="serviceFormTitle">Add Service</h3>
+      <input type="hidden" id="service-id">
+      <div class="form-row">
+        <div class="form-group"><label>Icon (emoji)</label><input type="text" id="service-icon" placeholder="📹"></div>
+        <div class="form-group"><label>Title</label><input type="text" id="service-title"></div>
+      </div>
+      <div class="form-group">
+        <label>Image URL (or pick from Media Library)</label>
+        <input type="text" id="service-image" placeholder="https://...">
+        <button type="button" class="add-row-btn" onclick="pickMedia('service-image','image')">📁 Choose from Media Library</button>
+      </div>
+      <div class="form-group"><label>Description</label><textarea id="service-desc" rows="3"></textarea></div>
+      <button class="btn btn-primary" onclick="saveService()">Save</button>
+      <button class="btn btn-outline" onclick="hideServiceForm()">Cancel</button>
+      <p class="save-msg" id="serviceSaveMsg">Saved successfully!</p>
+    </div>
+  </div>
+
+  <!-- ============ PRODUCTS ============ -->
+  <div class="tab" id="tab-products">
+    <h1>Manage Products</h1>
+    <button class="btn btn-primary" onclick="showProductForm()">+ Add New Product</button>
+    <table class="admin-table">
+      <thead><tr><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Badge</th><th>Actions</th></tr></thead>
+      <tbody id="products-table"></tbody>
+    </table>
+    <div class="admin-form" id="productForm" style="display:none;">
+      <h3 id="productFormTitle">Add Product</h3>
+      <input type="hidden" id="product-id">
+      <div class="form-row">
+        <div class="form-group"><label>Product Name</label><input type="text" id="product-name"></div>
+        <div class="form-group"><label>Category</label><input type="text" id="product-category"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Price</label><input type="text" id="product-price" placeholder="Rs. 5,000"></div>
+        <div class="form-group"><label>Badge (e.g. New, Best Seller)</label><input type="text" id="product-badge"></div>
+      </div>
+      <div class="form-group">
+        <label>Main Image URL</label>
+        <input type="text" id="product-img" placeholder="https://...">
+        <button type="button" class="add-row-btn" onclick="pickMedia('product-img','image')">📁 Choose from Media Library</button>
+      </div>
+      <div class="form-group">
+        <label>Gallery Images (one URL per line)</label>
+        <textarea id="product-gallery" rows="3" placeholder="https://image1.jpg&#10;https://image2.jpg"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Product Video (YouTube ID or link, optional)</label>
+        <input type="text" id="product-video">
+      </div>
+      <div class="form-group"><label>Description</label><textarea id="product-desc" rows="3"></textarea></div>
+      <div class="form-group">
+        <label>Specifications</label>
+        <div id="product-specs-rows"></div>
+        <span class="add-row-btn" onclick="addSpecRow()">+ Add Specification</span>
+      </div>
+      <div class="toggle-row">
+        <span>Featured Product (show on homepage)</span>
+        <label class="switch"><input type="checkbox" id="product-featured"><span class="slider-toggle"></span></label>
+      </div>
+      <button class="btn btn-primary" onclick="saveProduct()" style="margin-top:15px;">Save</button>
+      <button class="btn btn-outline" onclick="hideProductForm()">Cancel</button>
+      <p class="save-msg" id="productSaveMsg">Saved successfully!</p>
+    </div>
+  </div>
+
+  <!-- ============ PORTFOLIO ============ -->
+  <div class="tab" id="tab-portfolio">
+    <h1>Manage Portfolio Projects</h1>
+    <button class="btn btn-primary" onclick="showPortfolioForm()">+ Add New Project</button>
+    <table class="admin-table">
+      <thead><tr><th>Image</th><th>Title</th><th>Client</th><th>Location</th><th>Actions</th></tr></thead>
+      <tbody id="portfolio-table"></tbody>
+    </table>
+    <div class="admin-form" id="portfolioForm" style="display:none;">
+      <h3 id="portfolioFormTitle">Add Project</h3>
+      <input type="hidden" id="portfolio-id">
+      <div class="form-group"><label>Project Title</label><input type="text" id="portfolio-title"></div>
+      <div class="form-group"><label>Description</label><textarea id="portfolio-desc" rows="2"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label>Client Name</label><input type="text" id="portfolio-client"></div>
+        <div class="form-group"><label>Location</label><input type="text" id="portfolio-location"></div>
+      </div>
+      <div class="form-group">
+        <label>Thumbnail Image URL</label>
+        <input type="text" id="portfolio-img" placeholder="https://...">
+        <button type="button" class="add-row-btn" onclick="pickMedia('portfolio-img','image')">📁 Choose from Media Library</button>
+      </div>
+      <div class="form-group">
+        <label>Gallery Images (one URL per line)</label>
+        <textarea id="portfolio-gallery" rows="2"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Before Image URL</label><input type="text" id="portfolio-before"></div>
+        <div class="form-group"><label>After Image URL</label><input type="text" id="portfolio-after"></div>
+      </div>
+      <div class="form-group">
+        <label>YouTube Video ID or Link</label>
+        <input type="text" id="portfolio-youtube" placeholder="e.g. dQw4w9WgXcQ or full YouTube URL">
+      </div>
+      <button class="btn btn-primary" onclick="savePortfolio()">Save</button>
+      <button class="btn btn-outline" onclick="hidePortfolioForm()">Cancel</button>
+      <p class="save-msg" id="portfolioSaveMsg">Saved successfully!</p>
+    </div>
+  </div>
+
+  <!-- ============ TESTIMONIALS ============ -->
+  <div class="tab" id="tab-testimonials">
+    <h1>Manage Testimonials</h1>
+    <button class="btn btn-primary" onclick="showTestimonialForm()">+ Add New Testimonial</button>
+    <table class="admin-table">
+      <thead><tr><th>Image</th><th>Name</th><th>Type</th><th>Message</th><th>Actions</th></tr></thead>
+      <tbody id="testimonials-table"></tbody>
+    </table>
+    <div class="admin-form" id="testimonialForm" style="display:none;">
+      <h3 id="testimonialFormTitle">Add Testimonial</h3>
+      <input type="hidden" id="testimonial-id">
+      <div class="form-row">
+        <div class="form-group"><label>Client Name</label><input type="text" id="testimonial-name"></div>
+        <div class="form-group">
+          <label>Type</label>
+          <select id="testimonial-type">
+            <option value="text">Text Testimonial</option>
+            <option value="video">Video Testimonial</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Client Image URL</label>
+        <input type="text" id="testimonial-image" placeholder="https://...">
+        <button type="button" class="add-row-btn" onclick="pickMedia('testimonial-image','image')">📁 Choose from Media Library</button>
+      </div>
+      <div class="form-group">
+        <label>YouTube Video ID (if video testimonial)</label>
+        <input type="text" id="testimonial-video">
+      </div>
+      <div class="form-group"><label>Message / Quote</label><textarea id="testimonial-text" rows="3"></textarea></div>
+      <button class="btn btn-primary" onclick="saveTestimonial()">Save</button>
+      <button class="btn btn-outline" onclick="hideTestimonialForm()">Cancel</button>
+      <p class="save-msg" id="testimonialSaveMsg">Saved successfully!</p>
+    </div>
+  </div>
+
+  <!-- ============ STATISTICS ============ -->
+  <div class="tab" id="tab-statistics">
+    <h1>Statistics / Counters Manager</h1>
+    <p style="color:var(--text-muted);margin-bottom:10px;">These animated counters appear on your homepage hero section.</p>
+    <div class="toggle-row">
+      <span>Show Counters on Homepage</span>
+      <label class="switch"><input type="checkbox" id="toggle-showCounters"><span class="slider-toggle"></span></label>
+    </div>
+    <button class="btn btn-primary" onclick="showStatForm()" style="margin-top:15px;">+ Add Counter</button>
+    <table class="admin-table">
+      <thead><tr><th>Icon</th><th>Value</th><th>Label</th><th>Actions</th></tr></thead>
+      <tbody id="statistics-table"></tbody>
+    </table>
+    <div class="admin-form" id="statForm" style="display:none;">
+      <h3 id="statFormTitle">Add Counter</h3>
+      <input type="hidden" id="stat-id">
+      <div class="form-row">
+        <div class="form-group"><label>Icon (emoji)</label><input type="text" id="stat-icon" placeholder="📹"></div>
+        <div class="form-group"><label>Value (number)</label><input type="number" id="stat-value"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Suffix (e.g. +, /7, %)</label><input type="text" id="stat-suffix"></div>
+        <div class="form-group"><label>Label</label><input type="text" id="stat-label"></div>
+      </div>
+      <button class="btn btn-primary" onclick="saveStat()">Save</button>
+      <button class="btn btn-outline" onclick="hideStatForm()">Cancel</button>
+      <p class="save-msg" id="statSaveMsg">Saved successfully!</p>
+    </div>
+  </div>
+
+  <!-- ============ BANNERS ============ -->
+  <div class="tab" id="tab-banners">
+    <h1>Banner Manager</h1>
+    <p style="color:var(--text-muted);margin-bottom:10px;">Promotional strip shown at the very top of every page.</p>
+    <div class="toggle-row">
+      <span>Show Banner Site-Wide</span>
+      <label class="switch"><input type="checkbox" id="toggle-showBanner"><span class="slider-toggle"></span></label>
+    </div>
+    <button class="btn btn-primary" onclick="showBannerForm()" style="margin-top:15px;">+ Add Banner</button>
+    <table class="admin-table">
+      <thead><tr><th>Text</th><th>Button</th><th>Enabled</th><th>Actions</th></tr></thead>
+      <tbody id="banners-table"></tbody>
+    </table>
+    <div class="admin-form" id="bannerForm" style="display:none;">
+      <h3 id="bannerFormTitle">Add Banner</h3>
+      <input type="hidden" id="banner-id">
+      <div class="form-group"><label>Banner Text</label><input type="text" id="banner-text"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Button Text (optional)</label><input type="text" id="banner-btnText"></div>
+        <div class="form-group"><label>Button URL</label><input type="text" id="banner-btnUrl" placeholder="contact.html"></div>
+      </div>
+      <div class="toggle-row">
+        <span>Enabled</span>
+        <label class="switch"><input type="checkbox" id="banner-enabled"><span class="slider-toggle"></span></label>
+      </div>
+      <button class="btn btn-primary" onclick="saveBanner()" style="margin-top:15px;">Save</button>
+      <button class="btn btn-outline" onclick="hideBannerForm()">Cancel</button>
+      <p class="save-msg" id="bannerSaveMsg">Saved successfully!</p>
+    </div>
+  </div>
+
+  <!-- ============ POPUPS ============ -->
+  <div class="tab" id="tab-popups">
+    <h1>Popup Manager</h1>
+    <p style="color:var(--text-muted);margin-bottom:10px;">Show promotional / lead-generation popups to website visitors.</p>
+    <div class="toggle-row">
+      <span>Enable Popups Site-Wide</span>
+      <label class="switch"><input type="checkbox" id="toggle-showPopup"><span class="slider-toggle"></span></label>
+    </div>
+    <button class="btn btn-primary" onclick="showPopupForm()" style="margin-top:15px;">+ Add Popup</button>
+    <table class="admin-table">
+      <thead><tr><th>Title</th><th>Schedule</th><th>Enabled</th><th>Actions</th></tr></thead>
+      <tbody id="popups-table"></tbody>
+    </table>
+    <div class="admin-form" id="popupForm" style="display:none;">
+      <h3 id="popupFormTitle">Add Popup</h3>
+      <input type="hidden" id="popup-id">
+      <div class="form-group"><label>Popup Title</label><input type="text" id="popup-title"></div>
+      <div class="form-group"><label>Description</label><textarea id="popup-desc" rows="2"></textarea></div>
+      <div class="form-group">
+        <label>Image URL (optional)</label>
+        <input type="text" id="popup-image">
+        <button type="button" class="add-row-btn" onclick="pickMedia('popup-image','image')">📁 Choose from Media Library</button>
+      </div>
+      <div class="form-group"><label>YouTube Video ID (optional, overrides image)</label><input type="text" id="popup-video"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Button Text</label><input type="text" id="popup-btnText"></div>
+        <div class="form-group">
+          <label>Button URL ("whatsapp" or full URL)</label>
+          <input type="text" id="popup-btnUrl" placeholder="whatsapp">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Start Date (optional)</label><input type="date" id="popup-startDate"></div>
+        <div class="form-group"><label>End Date (optional)</label><input type="date" id="popup-endDate"></div>
+      </div>
+      <div class="toggle-row">
+        <span>Enabled</span>
+        <label class="switch"><input type="checkbox" id="popup-enabled"><span class="slider-toggle"></span></label>
+      </div>
+      <button class="btn btn-primary" onclick="savePopup()" style="margin-top:15px;">Save</button>
+      <button class="btn btn-outline" onclick="hidePopupForm()">Cancel</button>
+      <p class="save-msg" id="popupSaveMsg">Saved successfully!</p>
+    </div>
+  </div>
+
+  <!-- ============ MEDIA LIBRARY ============ -->
+  <div class="tab" id="tab-media">
+    <h1>Media Library</h1>
+    <p style="color:var(--text-muted);margin-bottom:15px;">
+      Upload images, videos or documents from your computer, or import via URL. Click "Copy" on any item to copy its link for use across the website.
+      <br><strong>Note:</strong> Uploaded files are stored in your browser's local storage (best for images &amp; small files, under ~1MB each).
+    </p>
+
+    <div class="dropzone" id="dropzone">
+      📁 Drag & drop files here, or click to browse<br>
+      <input type="file" id="fileInput" multiple style="display:none;">
+    </div>
+
+    <div class="admin-form" style="margin-top:20px;">
+      <h3>Import from URL</h3>
+      <div class="form-row">
+        <div class="form-group"><label>Media URL</label><input type="text" id="media-url" placeholder="https://..."></div>
+        <div class="form-group">
+          <label>Type</label>
+          <select id="media-url-type">
+            <option value="image">Image</option>
+            <option value="video">Video</option>
+            <option value="document">Document</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="addMediaFromUrl()">Add to Library</button>
+    </div>
+
+    <div class="media-grid" id="media-grid"></div>
+  </div>
+
+  <!-- ============ HOMEPAGE MANAGER ============ -->
+  <div class="tab" id="tab-homepage">
+    <h1>Homepage Manager</h1>
+
+    <div class="settings-section">
+      <h3>🦸 Hero Section</h3>
+      <div class="form-group"><label>Hero Title</label><input type="text" id="hp-heroTitle"></div>
+      <div class="form-group"><label>Hero Subtitle</label><input type="text" id="hp-heroSubtitle"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Primary CTA Button Text</label><input type="text" id="hp-heroBtnText"></div>
+        <div class="form-group"><label>Secondary CTA Button Text</label><input type="text" id="hp-heroBtn2Text"></div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h3>🎬 Hero Background Media</h3>
+      <div class="form-group">
+        <label>Background Type</label>
+        <select id="hp-heroBgType">
+          <option value="video">Video</option>
+          <option value="image">Image</option>
+          <option value="none">None (solid color)</option>
+        </select>
+      </div>
+      <div class="toggle-row">
+        <span>Enable Video Background</span>
+        <label class="switch"><input type="checkbox" id="hp-heroVideoEnabled"><span class="slider-toggle"></span></label>
+      </div>
+      <div class="form-group">
+        <label>Hero Background Image URL</label>
+        <input type="text" id="hp-heroBgImage">
+        <button type="button" class="add-row-btn" onclick="pickMedia('hp-heroBgImage','image')">📁 Choose from Media Library</button>
+      </div>
+      <div class="form-group">
+        <label>Hero Background Video URL</label>
+        <input type="text" id="hp-heroBgVideo">
+        <button type="button" class="add-row-btn" onclick="pickMedia('hp-heroBgVideo','video')">📁 Choose from Media Library</button>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="saveHomepage()">Save Homepage Settings</button>
+    <p class="save-msg" id="homepageSaveMsg">Saved successfully!</p>
+  </div>
+
+  <!-- ============ THEME MANAGER ============ -->
+  <div class="tab" id="tab-theme">
+    <h1>Theme Manager</h1>
+    <div class="settings-section">
+      <h3>🎨 Colors</h3>
+      <div class="form-row">
+        <div class="form-group"><label>Primary Color</label><input type="color" id="theme-primaryColor" style="height:46px;"></div>
+        <div class="form-group"><label>Secondary Color</label><input type="color" id="theme-secondaryColor" style="height:46px;"></div>
+      </div>
+      <div class="form-group"><label>Accent Color</label><input type="color" id="theme-accentColor" style="height:46px;"></div>
+    </div>
+    <div class="settings-section">
+      <h3>🔤 Typography & Buttons</h3>
+      <div class="form-group">
+        <label>Font Family</label>
+        <select id="theme-fontFamily">
+          <option value="'Segoe UI', sans-serif">Segoe UI (Default)</option>
+          <option value="'Poppins', sans-serif">Poppins</option>
+          <option value="'Roboto', sans-serif">Roboto</option>
+          <option value="'Inter', sans-serif">Inter</option>
+          <option value="'Montserrat', sans-serif">Montserrat</option>
+          <option value="Georgia, serif">Georgia (Serif)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Button Style</label>
+        <select id="theme-buttonStyle">
+          <option value="rounded">Rounded</option>
+          <option value="pill">Pill (fully round)</option>
+          <option value="square">Square</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="saveTheme()">Save Theme</button>
+    <p class="save-msg" id="themeSaveMsg">Saved successfully!</p>
+  </div>
+
+  <!-- ============ SEO MANAGER ============ -->
+  <div class="tab" id="tab-seo">
+    <h1>SEO Manager</h1>
+    <div class="settings-section">
+      <div class="form-group"><label>Meta Title</label><input type="text" id="seo-metaTitle"></div>
+      <div class="form-group"><label>Meta Description</label><textarea id="seo-metaDescription" rows="3"></textarea></div>
+      <div class="form-group"><label>Keywords (comma separated)</label><textarea id="seo-keywords" rows="2"></textarea></div>
+    </div>
+    <button class="btn btn-primary" onclick="saveSEO()">Save SEO Settings</button>
+    <p class="save-msg" id="seoSaveMsg">Saved successfully!</p>
+  </div>
+
+  <!-- ============ GENERAL SETTINGS ============ -->
+  <div class="tab" id="tab-settings">
+    <h1>General Settings</h1>
+
+    <div class="settings-section">
+      <h3>🧩 General</h3>
+      <div class="form-group">
+        <label>Website Logo URL</label>
+        <input type="text" id="set-logo">
+        <button type="button" class="add-row-btn" onclick="pickMedia('set-logo','image')">📁 Choose from Media Library</button>
+      </div>
+      <div class="form-group">
+        <label>Favicon URL</label>
+        <input type="text" id="set-favicon">
+        <button type="button" class="add-row-btn" onclick="pickMedia('set-favicon','image')">📁 Choose from Media Library</button>
+      </div>
+      <div class="form-group"><label>Website Title</label><input type="text" id="set-siteTitle"></div>
+      <div class="form-group"><label>Company Description</label><textarea id="set-companyDesc" rows="2"></textarea></div>
+      <div class="form-group"><label>Footer Text</label><input type="text" id="set-footerText"></div>
+    </div>
+
+    <div class="settings-section">
+      <h3>📱 Contact</h3>
+      <div class="form-row">
+        <div class="form-group"><label>WhatsApp Number (with country code, no +/spaces)</label><input type="text" id="set-whatsapp" placeholder="923001234567"></div>
+        <div class="form-group"><label>Phone Number (display)</label><input type="text" id="set-phone"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Call Button Number (tel: link)</label><input type="text" id="set-callNumber" placeholder="+923001234567"></div>
+        <div class="form-group"><label>Email</label><input type="text" id="set-email"></div>
+      </div>
+      <div class="form-group"><label>Address</label><input type="text" id="set-address"></div>
+      <div class="form-group"><label>Google Map Embed URL</label><input type="text" id="set-mapEmbed"></div>
+    </div>
+
+    <div class="settings-section">
+      <h3>🌐 Social Media Links</h3>
+      <div class="form-row">
+        <div class="form-group"><label>Facebook URL</label><input type="text" id="social-facebook"></div>
+        <div class="form-group"><label>Instagram URL</label><input type="text" id="social-instagram"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>LinkedIn URL</label><input type="text" id="social-linkedin"></div>
+        <div class="form-group"><label>YouTube URL</label><input type="text" id="social-youtube"></div>
+      </div>
+      <div class="form-group"><label>TikTok URL</label><input type="text" id="social-tiktok"></div>
+    </div>
+
+    <button class="btn btn-primary" onclick="saveSettings()">Save All Settings</button>
+    <p class="save-msg" id="settingsSaveMsg">Settings saved successfully!</p>
+
+    <div class="settings-section" style="margin-top:45px;">
+      <h3>🔑 Change Admin Password</h3>
+      <div class="form-row">
+        <div class="form-group"><label>New Username</label><input type="text" id="new-username"></div>
+        <div class="form-group"><label>New Password</label><input type="password" id="new-password"></div>
+      </div>
+      <button class="btn btn-outline" onclick="changeCredentials()">Update Credentials</button>
+      <p class="save-msg" id="credsSaveMsg">Credentials updated!</p>
+    </div>
+
+    <div class="settings-section">
+      <h3>⚠️ Danger Zone</h3>
+      <button class="btn btn-outline" onclick="resetAllData()" style="border-color:#ff5e5e; color:#ff5e5e;">Reset All Data to Default</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/admin.js"></script>
+</body>
+</html>

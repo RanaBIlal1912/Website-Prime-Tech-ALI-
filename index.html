@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecureNet IT & CCTV Solutions | Home</title>
+<meta name="description" content="Professional CCTV installation, networking, server setup and IT security solutions.">
+<link rel="icon" href="assets/img/logo.png">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<!-- PAGE LOADER -->
+<div class="page-loader" id="pageLoader"><div class="loader-ring"></div></div>
+
+<!-- TOP PROMO BANNER -->
+<div class="promo-banner" id="promo-banner"></div>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="index.html" class="logo">
+    <img src="assets/img/logo.png" class="logo-img" alt="Logo">
+    <span class="logo-text">SecureNet</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html" class="active">Home</a></li>
+    <li><a href="services.html">Services</a></li>
+    <li><a href="products.html">Products</a></li>
+    <li><a href="portfolio.html">Portfolio</a></li>
+    <li><a href="contact.html">Contact</a></li>
+  </ul>
+  <button class="menu-toggle">☰</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <video autoplay muted loop playsinline poster="assets/img/hero-poster.jpg">
+    <source src="assets/img/hero-bg.mp4" type="video/mp4">
+  </video>
+  <img class="hero-bg-img" src="assets/img/hero-poster.jpg" alt="" style="display:none;">
+  <div class="hero-content">
+    <span class="hero-badge">⭐ Trusted IT & Security Partner Since 2018</span>
+    <h1 class="hero-title">Smart Security & IT Solutions for Your Business</h1>
+    <p class="hero-subtitle">CCTV Installation • Networking • Server Setup • Hardware Sales & Support</p>
+    <div class="hero-buttons">
+      <a href="#" class="btn btn-primary whatsapp-link" target="_blank"><span class="hero-btn-text">Get Free Quote on WhatsApp</span></a>
+      <a href="javascript:void(0)" class="btn btn-outline" onclick="openQuoteModal()"><span class="hero-btn2-text">Request Site Survey</span></a>
+    </div>
+  </div>
+  <!-- COUNTERS -->
+  <div class="counters-section" id="counters"></div>
+</section>
+
+<!-- SERVICES PREVIEW -->
+<section class="section">
+  <div class="section-title reveal">
+    <span class="tag">What We Offer</span>
+    <h2>Our <span>Services</span></h2>
+    <p>End-to-end IT and security solutions tailored for your home or business.</p>
+  </div>
+  <div class="grid" id="services-preview"></div>
+  <div style="text-align:center; margin-top:40px;">
+    <a href="services.html" class="btn btn-outline">View All Services</a>
+  </div>
+</section>
+
+<!-- PRODUCTS PREVIEW -->
+<section class="section bg-alt">
+  <div class="section-title reveal">
+    <span class="tag">Premium Hardware</span>
+    <h2>Featured <span>Products</span></h2>
+    <p>Genuine, high-quality hardware with full support.</p>
+  </div>
+  <div class="grid" id="products-preview"></div>
+  <div style="text-align:center; margin-top:40px;">
+    <a href="products.html" class="btn btn-outline">View All Products</a>
+  </div>
+</section>
+
+<!-- PORTFOLIO PREVIEW -->
+<section class="section">
+  <div class="section-title reveal">
+    <span class="tag">Our Work</span>
+    <h2>Featured <span>Projects</span></h2>
+    <p>Real installations completed by our team — watch how we work.</p>
+  </div>
+  <div class="grid" id="portfolio-preview"></div>
+  <div style="text-align:center; margin-top:40px;">
+    <a href="portfolio.html" class="btn btn-outline">View Full Portfolio</a>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="section bg-alt">
+  <div class="section-title reveal">
+    <span class="tag">Client Love</span>
+    <h2>Client <span>Testimonials</span></h2>
+    <p>What our clients say about our work.</p>
+  </div>
+  <div class="grid" id="testimonials"></div>
+</section>
+
+<!-- CTA BANNER -->
+<section class="section">
+  <div class="cta-banner reveal">
+    <h2>Ready to Secure Your Business?</h2>
+    <p>Contact us today for a free consultation and quote.</p>
+    <div class="hero-buttons">
+      <a href="#" class="btn btn-primary whatsapp-link" target="_blank">Chat on WhatsApp</a>
+      <a href="javascript:void(0)" class="btn btn-outline" onclick="openQuoteModal()">Request Site Survey</a>
+    </div>
+  </div>
+</section>
+
+<!-- VIDEO MODAL -->
+<div class="modal" id="videoModal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeVideo()">✕</button>
+    <iframe id="videoIframe" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+  </div>
+</div>
+
+<!-- SITE POPUP -->
+<div class="site-popup" id="sitePopup"></div>
+
+<!-- FLOATING BUTTONS -->
+<div class="float-buttons">
+  <a href="javascript:void(0)" class="float-btn quote-float" onclick="openQuoteModal()">📋 Get Quote</a>
+  <a href="#" class="float-btn call-float call-link">📞</a>
+  <a href="#" class="float-btn whatsapp-float whatsapp-link" target="_blank">💬</a>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="logo" style="justify-content:center;">
+    <img src="assets/img/logo.png" class="logo-img" alt="Logo">
+    <span class="logo-text">SecureNet</span>
+  </div>
+  <p class="company-desc" style="max-width:600px;margin:14px auto;"></p>
+  <div class="social-links"></div>
+  <div class="footer-links">
+    <a href="index.html">Home</a>
+    <a href="services.html">Services</a>
+    <a href="products.html">Products</a>
+    <a href="portfolio.html">Portfolio</a>
+    <a href="contact.html">Contact</a>
+    <a href="admin/login.html">Admin</a>
+  </div>
+  <p class="footer-text small"></p>
+</footer>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/main.js"></script>
+<script>
+  renderServices('services-preview', 3);
+  renderProducts('products-preview', 4);
+  renderPortfolio('portfolio-preview', 3);
+  renderTestimonials('testimonials');
+  renderCounters('counters');
+</script>
+</body>
+</html>
