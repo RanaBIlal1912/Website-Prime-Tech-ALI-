@@ -1,0 +1,53 @@
+# Prime Tech — production-style stack: PostgreSQL + Django (gunicorn) + Nginx.
+# The Next.js frontend service is added in the frontend phase.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-primetech}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-primetech}
+      POSTGRES_DB: ${POSTGRES_DB:-primetech}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-primetech}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-primetech}:${POSTGRES_PASSWORD:-primetech}@db:5432/${POSTGRES_DB:-primetech}
+      DJANGO_SETTINGS_MODULE: config.settings.prod
+      RUN_SEED: ${RUN_SEED:-false}
+    volumes:
+      - media:/app/media
+      - static:/app/staticfiles
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "8000"
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - media:/var/www/media:ro
+      - static:/var/www/static:ro
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  media:
+  static:

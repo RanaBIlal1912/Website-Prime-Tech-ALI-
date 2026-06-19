@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+backend_venv/
+venv/
+.venv/
+
+# Env & secrets
+.env
+backend/.env
+*.env.local
+
+# Django
+backend/staticfiles/
+backend/media/
+*.sqlite3
+*.log
+
+# Node / Next.js (frontend phase)
+node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env*.local
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Build artifacts
+*.pdf.tmp
+/tmp/
