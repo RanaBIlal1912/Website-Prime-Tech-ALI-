@@ -9,6 +9,9 @@ psycopg2-binary==2.9.9
 # Password hashing (Argon2 preferred)
 argon2-cffi==23.1.0
 
+# Admin UI skin (themes the Django admin)
+django-jazzmin==3.0.1
+
 # API tooling
 django-cors-headers==4.3.1
 django-filter==24.2

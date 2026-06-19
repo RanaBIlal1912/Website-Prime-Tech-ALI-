@@ -32,6 +32,7 @@ ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 # Applications
 # ---------------------------------------------------------------------------
 DJANGO_APPS = [
+    "jazzmin",  # must precede django.contrib.admin to theme it
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -177,6 +178,9 @@ SIMPLE_JWT = {
     "SIGNING_KEY": env("JWT_SIGNING_KEY", default=SECRET_KEY),
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
+
+# Admin UI theming (Jazzmin). Presentational only.
+from .jazzmin import JAZZMIN_SETTINGS, JAZZMIN_UI_TWEAKS  # noqa: E402,F401
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "Prime Tech Platform API",
