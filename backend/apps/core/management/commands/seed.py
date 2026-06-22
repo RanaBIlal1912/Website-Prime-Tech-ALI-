@@ -12,10 +12,13 @@ import secrets
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.utils import timezone
 
 from apps.accounts.models import ACTIONS, MODULES, Permission, Role, User
+from apps.blog.models import Category as BlogCategory
+from apps.blog.models import Post, Tag
 from apps.catalog.models import Category, Product, Service, Testimonial
-from apps.core.models import HomeSection, PageBackground, SiteSetting
+from apps.core.models import HomeSection, PageBackground, SeoSetting, SiteSetting
 from apps.portfolio.models import Project
 
 # Which modules each non-super role can act on, and with which actions.
@@ -73,6 +76,12 @@ class Command(BaseCommand):
         self._seed_content()
         self.stdout.write("Seeding page backgrounds + home sections…")
         self._seed_backgrounds()
+        self.stdout.write("Seeding homepage section content (hero/stats/why-us/industries/cta)…")
+        self._seed_home_config()
+        self.stdout.write("Seeding blog (categories/tags/posts)…")
+        self._seed_blog()
+        self.stdout.write("Seeding SEO defaults…")
+        self._seed_seo()
         self.stdout.write(self.style.SUCCESS("Seed complete."))
 
     # --------------------------------------------------------------- RBAC
@@ -232,4 +241,191 @@ class Command(BaseCommand):
         for i, (key, title) in enumerate(sections):
             HomeSection.objects.get_or_create(
                 key=key, defaults={"title": title, "order": i, "enabled": True}
+            )
+
+    # ---------------------------------------------- homepage section content
+    def _seed_home_config(self):
+        """Populate the JSON `config` of each home section so the homepage is
+        fully content-managed (no hard-coded copy in the frontend)."""
+        configs = {
+            "hero": {
+                "badge": "Trusted IT & Security Partner Since 2018",
+                "title": "Enterprise Security & IT Infrastructure",
+                "highlight": "Built to Protect What Matters",
+                "subtitle": (
+                    "Prime Tech designs, installs and maintains CCTV, networking, "
+                    "fiber optic, access control and biometric systems for homes and "
+                    "businesses across Pakistan."
+                ),
+                "primary_cta": {"label": "Get a Free Quote", "href": "/contact"},
+                "secondary_cta": {"label": "Request Site Survey", "href": "/contact"},
+            },
+            "stats": {
+                "items": [
+                    {"icon": "📹", "value": 500, "suffix": "+", "label": "Projects Completed"},
+                    {"icon": "😀", "value": 300, "suffix": "+", "label": "Happy Clients"},
+                    {"icon": "🏆", "value": 8, "suffix": "+", "label": "Years Experience"},
+                    {"icon": "🛠️", "value": 24, "suffix": "/7", "label": "Support Available"},
+                ]
+            },
+            "why-us": {
+                "subtitle": "Why industry leaders choose Prime Tech",
+                "items": [
+                    {"icon": "🛡️", "title": "Certified Engineers",
+                     "text": "Manufacturer-certified technicians for every install and integration."},
+                    {"icon": "⚡", "title": "Fast Turnaround",
+                     "text": "Most installations completed within 1–3 days with minimal disruption."},
+                    {"icon": "🔧", "title": "End-to-End Support",
+                     "text": "From site survey to AMC, a single accountable partner for the lifecycle."},
+                    {"icon": "✅", "title": "Genuine Equipment",
+                     "text": "Authentic, warranty-backed hardware from trusted global brands."},
+                ],
+            },
+            "industries": {
+                "subtitle": "Security & IT solutions tailored to your sector",
+                "items": [
+                    {"icon": "🏢", "name": "Corporate Offices"},
+                    {"icon": "🏭", "name": "Factories & Warehouses"},
+                    {"icon": "🏫", "name": "Schools & Campuses"},
+                    {"icon": "🏥", "name": "Hospitals & Clinics"},
+                    {"icon": "🏬", "name": "Retail & Shops"},
+                    {"icon": "🏛️", "name": "Government"},
+                ],
+            },
+            "cta": {
+                "title": "Ready to Secure Your Business?",
+                "subtitle": (
+                    "Book a free site survey and consultation for CCTV, networking, "
+                    "or access control. Limited slots available this month."
+                ),
+                "primary_cta": {"label": "Get Started", "href": "/contact"},
+            },
+        }
+        for key, cfg in configs.items():
+            section = HomeSection.objects.filter(key=key).first()
+            if section and not section.config:
+                section.config = cfg
+                section.save(update_fields=["config", "updated_at"])
+
+    # ----------------------------------------------------------------- blog
+    def _seed_blog(self):
+        admin = User.objects.filter(email="admin@primetech.pk").first()
+        cat, _ = BlogCategory.objects.get_or_create(
+            name="Security Insights",
+            defaults={"description": "Expert guidance on CCTV, networking and physical security."},
+        )
+        guides, _ = BlogCategory.objects.get_or_create(
+            name="Buying Guides",
+            defaults={"description": "How to choose the right security and IT equipment."},
+        )
+        tag_names = ["CCTV", "Networking", "Access Control", "Biometrics", "Fiber Optic", "Tips"]
+        tags = {n: Tag.objects.get_or_create(name=n)[0] for n in tag_names}
+
+        posts = [
+            {
+                "title": "How to Choose the Right CCTV System for Your Business",
+                "category": guides,
+                "excerpt": "Resolution, night vision, storage and remote access — the four factors that "
+                           "decide whether your CCTV investment actually protects your premises.",
+                "tags": ["CCTV", "Tips"],
+                "content": (
+                    "<p>Selecting a CCTV system is one of the most important security decisions a "
+                    "business can make. The right setup deters intruders, provides court-admissible "
+                    "evidence, and gives owners genuine peace of mind.</p>"
+                    "<h2>1. Resolution matters</h2>"
+                    "<p>For most commercial sites, 4MP cameras strike the best balance between image "
+                    "clarity and storage cost. Higher 4K resolution is ideal for entrances and tills "
+                    "where facial detail is critical.</p>"
+                    "<h2>2. Night vision &amp; low light</h2>"
+                    "<p>Look for cameras with a 30m+ IR range and true WDR so footage remains usable "
+                    "after dark and against bright backlight.</p>"
+                    "<h2>3. Storage &amp; retention</h2>"
+                    "<p>Plan for at least 30 days of retention. An 8-channel DVR with up to 10TB of "
+                    "storage comfortably covers most small-to-medium installations.</p>"
+                    "<h2>4. Remote viewing</h2>"
+                    "<p>Modern systems stream securely to your phone. Prime Tech configures encrypted "
+                    "remote access so you can check any camera, anywhere, at any time.</p>"
+                    "<p>Need help speccing a system? <a href=\"/contact\">Request a free site survey.</a></p>"
+                ),
+            },
+            {
+                "title": "Structured Cabling: The Backbone of a Reliable Office Network",
+                "category": cat,
+                "excerpt": "Wi-Fi gets the attention, but it's the cabling behind the walls that "
+                           "determines whether your network is fast, stable and future-proof.",
+                "tags": ["Networking", "Fiber Optic"],
+                "content": (
+                    "<p>A network is only as reliable as the cabling it runs on. Cutting corners on "
+                    "structured cabling leads to dropped connections, slow transfers and costly "
+                    "rework down the line.</p>"
+                    "<h2>Why Cat6 / fiber matters</h2>"
+                    "<p>Cat6 supports gigabit speeds across the office, while fiber backbones connect "
+                    "floors and buildings without signal loss. Together they create headroom for years "
+                    "of growth.</p>"
+                    "<h2>Certified installation</h2>"
+                    "<p>Every Prime Tech cabling job is tested and certified, with labelled patch "
+                    "panels and clean cable management for effortless future maintenance.</p>"
+                    "<p><a href=\"/contact\">Talk to our networking team</a> about your premises.</p>"
+                ),
+            },
+            {
+                "title": "Biometric Access Control vs. Traditional Locks",
+                "category": cat,
+                "excerpt": "Keys get copied and lost. Biometric and card-based access control give you "
+                           "audit trails, instant revocation and true accountability.",
+                "tags": ["Access Control", "Biometrics"],
+                "content": (
+                    "<p>Physical keys are a security liability: they can be duplicated, lost, or passed "
+                    "on without your knowledge. Biometric access control eliminates these risks.</p>"
+                    "<h2>Accountability by design</h2>"
+                    "<p>Every entry is logged against an identity. If an incident occurs, you have a "
+                    "precise, time-stamped record of who accessed what and when.</p>"
+                    "<h2>Instant control</h2>"
+                    "<p>Revoke a departed employee's access in seconds — no lock changes, no reissued "
+                    "keys. Pair fingerprint or face recognition with attendance for a complete solution.</p>"
+                    "<p><a href=\"/contact\">Upgrade your entry security</a> with Prime Tech.</p>"
+                ),
+            },
+        ]
+        for i, p in enumerate(posts):
+            post, created = Post.objects.get_or_create(
+                title=p["title"],
+                defaults={
+                    "category": p["category"],
+                    "excerpt": p["excerpt"],
+                    "content": p["content"],
+                    "author": admin,
+                    "status": "published",
+                    "published_at": timezone.now(),
+                    "seo_title": p["title"],
+                    "seo_description": p["excerpt"],
+                },
+            )
+            if created:
+                post.tags.set([tags[t] for t in p["tags"]])
+
+    # ------------------------------------------------------------------ seo
+    def _seed_seo(self):
+        defaults = [
+            ("/", "Prime Tech — Security & IT Solutions in Pakistan",
+             "Professional CCTV, networking, fiber optic, access control and biometric "
+             "solutions for homes and businesses across Pakistan."),
+            ("/services", "Our Services — Prime Tech",
+             "CCTV installation, networking, server setup, access control, biometrics and AMC."),
+            ("/products", "Products — Prime Tech",
+             "Genuine CCTV cameras, DVRs, network switches and routers with full support."),
+            ("/portfolio", "Portfolio — Prime Tech",
+             "Explore Prime Tech's completed CCTV, networking and security projects."),
+            ("/blog", "Blog — Prime Tech",
+             "Security insights, buying guides and expert tips from the Prime Tech team."),
+            ("/contact", "Contact Prime Tech",
+             "Get a free quote or site survey for your security and IT needs."),
+        ]
+        for path, title, desc in defaults:
+            SeoSetting.objects.get_or_create(
+                path=path,
+                defaults={"meta_title": title, "meta_description": desc,
+                          "og_title": title, "og_description": desc,
+                          "keywords": "CCTV, networking, security, access control, "
+                                      "biometrics, fiber optic, Bahawalpur, Pakistan"},
             )
