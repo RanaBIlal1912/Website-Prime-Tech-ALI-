@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #00aaff;
+  --secondary: #7b2ff7;
+  --accent: #00ffc8;
+}
+
+@layer base {
+  * {
+    @apply border-hairline;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-ink text-content antialiased;
+    background-image:
+      radial-gradient(60% 50% at 12% 8%, rgba(0, 170, 255, 0.10) 0%, transparent 60%),
+      radial-gradient(55% 45% at 88% 18%, rgba(123, 47, 247, 0.10) 0%, transparent 60%);
+    background-attachment: fixed;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: rgba(0, 170, 255, 0.3);
+    color: #fff;
+  }
+}
+
+@layer components {
+  .container-x {
+    @apply mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-10;
+  }
+
+  .glass {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(10px);
+    @apply border border-white/[0.06];
+  }
+
+  .card {
+    @apply rounded-brand border border-white/[0.07] bg-ink-card/80 shadow-card transition-all duration-300;
+  }
+  .card:hover {
+    @apply -translate-y-1.5 border-primary/40 shadow-glow;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-white via-primary to-accent bg-clip-text text-transparent;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold
+           transition-all duration-300 focus-visible:outline-none focus-visible:ring-2
+           focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-ink;
+  }
+  .btn-primary {
+    @apply btn bg-brand-gradient text-ink shadow-glow hover:-translate-y-0.5 hover:brightness-110;
+  }
+  .btn-ghost {
+    @apply btn border border-white/15 bg-white/[0.03] text-content hover:border-primary/60 hover:bg-white/[0.06];
+  }
+  .btn-sm {
+    @apply px-5 py-2.5 text-[13px];
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04]
+           px-3.5 py-1.5 text-xs font-medium text-content-muted transition-colors;
+  }
+  .chip-active {
+    @apply border-primary/50 bg-primary/15 text-content;
+  }
+
+  .section {
+    @apply py-20 sm:py-24;
+  }
+  .eyebrow {
+    @apply inline-block text-xs font-semibold uppercase tracking-[0.22em] text-primary;
+  }
+  .prose-content {
+    @apply leading-relaxed text-content-muted;
+  }
+  .prose-content h2 {
+    @apply mt-8 mb-3 text-xl font-bold text-content;
+  }
+  .prose-content p {
+    @apply mb-4;
+  }
+  .prose-content a {
+    @apply text-primary underline-offset-2 hover:underline;
+  }
+  .prose-content ul {
+    @apply mb-4 list-disc space-y-1 pl-6;
+  }
+}
+
+/* Respect reduced motion preferences for accessibility. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
