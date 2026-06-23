@@ -26,7 +26,18 @@ environ.Env.read_env(BASE_DIR / ".env")
 
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
-ALLOWED_HOSTS = env("ALLOWED_HOSTS")
+# Allow any host by default for local/dev & container usage.
+# If you set ALLOWED_HOSTS explicitly in prod, it will override this.
+# Allow any host by default for local/dev & container usage.
+# In production, set ALLOWED_HOSTS env explicitly to restrict.
+ALLOWED_HOSTS = env("ALLOWED_HOSTS", default=["*"])
+if isinstance(ALLOWED_HOSTS, str):
+    # environ can return a single value when provided as CSV string
+    ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS.split(",") if h.strip()]
+# Ensure localhost entries work.
+for h in ["127.0.0.1", "localhost"]:
+    if h not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(h)
 
 # ---------------------------------------------------------------------------
 # Applications
@@ -108,8 +119,9 @@ ASGI_APPLICATION = "config.asgi.application"
 DATABASES = {
     "default": env.db(
         "DATABASE_URL",
-        default="postgres://primetech:primetech@localhost:5432/primetech",
+        default="postgres://primetech:admin123@localhost:5432/inventra_db",
     )
+
 }
 DATABASES["default"]["CONN_MAX_AGE"] = env.int("DB_CONN_MAX_AGE", default=60)
 
