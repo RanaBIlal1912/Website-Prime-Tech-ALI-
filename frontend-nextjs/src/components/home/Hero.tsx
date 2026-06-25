@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import type { HeroConfig } from "@/lib/types";
 
@@ -13,64 +14,54 @@ const fade = (delay: number) => ({
 interface HeroProps {
   config: HeroConfig;
   tagline: string;
-  /** Background video URL (backend-managed; falls back to the bundled asset). */
+  /** Background image URL (backend-managed; falls back to the bundled asset). */
+  imageUrl?: string | null;
+  /** Optional background video URL — overrides the image when set. */
   videoUrl?: string | null;
-  /** Poster image shown before the video loads / when motion is reduced. */
-  poster?: string | null;
-  /** Dark overlay strength over the video, 0–1. */
+  /** Dark overlay strength over the media, 0–1. */
   overlayOpacity?: number;
 }
 
-export function Hero({ config, tagline, videoUrl, poster, overlayOpacity = 0.55 }: HeroProps) {
+export function Hero({ config, tagline, imageUrl, videoUrl, overlayOpacity = 0.6 }: HeroProps) {
   const primary = config.primary_cta ?? { label: "Get a Free Quote", href: "/contact" };
   const secondary = config.secondary_cta;
-  const hasVideo = Boolean(videoUrl);
 
   return (
     <section className="relative flex min-h-[92vh] items-center overflow-hidden">
-      {/* Background: video when available, otherwise the animated mesh fallback */}
-      {hasVideo ? (
-        <>
-          <video
-            className="absolute inset-0 h-full w-full object-cover motion-reduce:hidden"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            poster={poster || undefined}
-            aria-hidden
-          >
-            <source src={videoUrl!} type="video/mp4" />
-          </video>
-          {/* Static poster for reduced-motion users (video is hidden above) */}
-          {poster ? (
-            <div
-              className="absolute inset-0 hidden bg-cover bg-center motion-reduce:block"
-              style={{ backgroundImage: `url(${poster})` }}
-              aria-hidden
-            />
-          ) : null}
-          {/* Readability overlays */}
-          <div className="absolute inset-0 bg-ink" style={{ opacity: overlayOpacity }} aria-hidden />
-          <div className="absolute inset-0 bg-gradient-to-b from-ink/40 via-transparent to-ink" aria-hidden />
-          <div className="absolute inset-0 bg-hero-mesh opacity-60" aria-hidden />
-        </>
+      {/* Background media: optional video overrides the image; image is the default. */}
+      {videoUrl ? (
+        <video
+          className="absolute inset-0 h-full w-full object-cover motion-reduce:hidden"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster={imageUrl || undefined}
+          aria-hidden
+        >
+          <source src={videoUrl} type="video/mp4" />
+        </video>
+      ) : null}
+
+      {imageUrl ? (
+        <Image
+          src={imageUrl}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className={`object-cover ${videoUrl ? "motion-reduce:block hidden" : ""}`}
+          aria-hidden
+        />
       ) : (
-        <>
-          <div className="absolute inset-0 bg-hero-mesh" aria-hidden />
-          <div
-            className="absolute inset-0 opacity-[0.05]"
-            style={{
-              backgroundImage:
-                "linear-gradient(rgba(255,255,255,.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.6) 1px,transparent 1px)",
-              backgroundSize: "44px 44px",
-              maskImage: "radial-gradient(70% 70% at 50% 30%, #000 0%, transparent 80%)",
-            }}
-            aria-hidden
-          />
-        </>
+        <div className="absolute inset-0 bg-hero-mesh" aria-hidden />
       )}
+
+      {/* Readability overlays tuned for white text on a photo */}
+      <div className="absolute inset-0 bg-ink" style={{ opacity: overlayOpacity }} aria-hidden />
+      <div className="absolute inset-0 bg-gradient-to-b from-ink/70 via-ink/40 to-ink" aria-hidden />
+      <div className="absolute inset-0 bg-hero-mesh opacity-50 mix-blend-screen" aria-hidden />
       <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-ink" aria-hidden />
 
       <div className="container-x relative pt-28 sm:pt-24">
@@ -87,7 +78,7 @@ export function Hero({ config, tagline, videoUrl, poster, overlayOpacity = 0.55 
 
           <motion.h1
             {...fade(0.1)}
-            className="mt-6 text-4xl font-extrabold leading-[1.08] tracking-tight text-content sm:text-6xl"
+            className="mt-6 text-4xl font-extrabold leading-[1.08] tracking-tight text-content drop-shadow-[0_2px_20px_rgba(0,0,0,0.6)] sm:text-6xl"
           >
             {config.title || "Enterprise Security & IT Infrastructure"}
             {config.highlight ? (

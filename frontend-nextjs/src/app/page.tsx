@@ -44,14 +44,13 @@ export default async function HomePage() {
 
   const tagline = settings?.tagline || BRAND_FALLBACK.tagline;
 
-  // Hero background video: use the admin-managed URL when set, otherwise the
-  // bundled brand asset. Only treat it as a video background when bg_type allows.
-  const allowsVideo = !homeBg || homeBg.bg_type === "video" || homeBg.bg_type === "default";
-  const heroVideo = allowsVideo
-    ? resolveImage(homeBg?.video_url) || "/hero-bg.mp4"
-    : null;
-  const heroPoster = resolveImage(homeBg?.image_url) || "/hero-poster.jpg";
-  const heroOverlay = homeBg?.overlay_opacity ? Math.max(homeBg.overlay_opacity, 0.45) : 0.55;
+  // Hero background: a real image by default (admin-managed via PageBackground.image_url,
+  // falling back to the bundled brand photo). A video only kicks in when the admin sets
+  // bg_type=video AND provides a video_url.
+  const heroImage = resolveImage(homeBg?.image_url) || "/hero-bg.jpg";
+  const heroVideo =
+    homeBg?.bg_type === "video" ? resolveImage(homeBg?.video_url) : null;
+  const heroOverlay = homeBg?.overlay_opacity ? Math.max(homeBg.overlay_opacity, 0.5) : 0.6;
   const hero = (sectionByKey(sections, "hero")?.config as HeroConfig) || {};
   const stats = (sectionByKey(sections, "stats")?.config?.items as StatItem[]) || [];
   const whyUs = sectionByKey(sections, "why-us")?.config as { items?: IconTextItem[]; subtitle?: string } | undefined;
@@ -72,8 +71,8 @@ export default async function HomePage() {
         <Hero
           config={hero}
           tagline={tagline}
+          imageUrl={heroImage}
           videoUrl={heroVideo}
-          poster={heroPoster}
           overlayOpacity={heroOverlay}
         />
       )}
