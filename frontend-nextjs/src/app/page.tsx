@@ -9,12 +9,14 @@ import { ServiceCard, ProjectCard, TestimonialCard } from "@/components/cards";
 import { JsonLd } from "@/components/JsonLd";
 import {
   getHomeSections,
+  getPageBackground,
   getProjects,
   getServices,
   getSiteSettings,
   getTestimonials,
   sectionByKey,
 } from "@/lib/data";
+import { resolveImage } from "@/lib/utils";
 import { buildMetadata } from "@/lib/seo";
 import { organizationSchema } from "@/lib/schema";
 import type {
@@ -31,15 +33,25 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [sections, settings, services, projects, testimonials] = await Promise.all([
+  const [sections, settings, services, projects, testimonials, homeBg] = await Promise.all([
     getHomeSections(),
     getSiteSettings(),
     getServices({ featured: true }),
     getProjects({ featured: true }),
     getTestimonials(),
+    getPageBackground("home"),
   ]);
 
   const tagline = settings?.tagline || BRAND_FALLBACK.tagline;
+
+  // Hero background video: use the admin-managed URL when set, otherwise the
+  // bundled brand asset. Only treat it as a video background when bg_type allows.
+  const allowsVideo = !homeBg || homeBg.bg_type === "video" || homeBg.bg_type === "default";
+  const heroVideo = allowsVideo
+    ? resolveImage(homeBg?.video_url) || "/hero-bg.mp4"
+    : null;
+  const heroPoster = resolveImage(homeBg?.image_url) || "/hero-poster.jpg";
+  const heroOverlay = homeBg?.overlay_opacity ? Math.max(homeBg.overlay_opacity, 0.45) : 0.55;
   const hero = (sectionByKey(sections, "hero")?.config as HeroConfig) || {};
   const stats = (sectionByKey(sections, "stats")?.config?.items as StatItem[]) || [];
   const whyUs = sectionByKey(sections, "why-us")?.config as { items?: IconTextItem[]; subtitle?: string } | undefined;
@@ -56,7 +68,15 @@ export default async function HomePage() {
     <>
       <JsonLd data={organizationSchema(settings)} />
 
-      {has("hero") && <Hero config={hero} tagline={tagline} />}
+      {has("hero") && (
+        <Hero
+          config={hero}
+          tagline={tagline}
+          videoUrl={heroVideo}
+          poster={heroPoster}
+          overlayOpacity={heroOverlay}
+        />
+      )}
 
       {has("stats") && stats.length > 0 && (
         <section className="container-x -mt-20 relative z-10 pb-4">

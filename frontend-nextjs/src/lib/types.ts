@@ -93,6 +93,18 @@ export interface HomeSection {
   config: Record<string, unknown>;
 }
 
+export interface PageBackground {
+  id: string;
+  page_key: string;
+  enabled: boolean;
+  bg_type: "image" | "animated" | "video" | "gradient" | "parallax" | "default";
+  image_url: string;
+  video_url: string;
+  gradient_css: string;
+  overlay_opacity: number;
+  is_published: boolean;
+}
+
 export interface Category {
   id: string;
   name: string;

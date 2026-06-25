@@ -5,6 +5,7 @@ import type {
   BlogPost,
   Category,
   HomeSection,
+  PageBackground,
   Product,
   Project,
   SeoSetting,
@@ -23,6 +24,11 @@ export async function getSiteSettings(): Promise<SiteSettings | null> {
 export async function getHomeSections(): Promise<HomeSection[]> {
   const rows = await apiList<HomeSection>("/cms/home-sections/", { revalidate: 300 });
   return rows.filter((s) => s.enabled).sort((a, b) => a.order - b.order);
+}
+
+export async function getPageBackground(pageKey: string): Promise<PageBackground | null> {
+  const bg = await apiOne<PageBackground>(`/cms/backgrounds/${pageKey}/`, { revalidate: 600 });
+  return bg && bg.enabled && bg.is_published ? bg : null;
 }
 
 export async function getSeo(path: string): Promise<SeoSetting | null> {

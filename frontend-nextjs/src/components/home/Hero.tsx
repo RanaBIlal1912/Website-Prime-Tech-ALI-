@@ -10,31 +10,75 @@ const fade = (delay: number) => ({
   transition: { duration: 0.7, delay, ease: [0.2, 0.8, 0.2, 1] as const },
 });
 
-export function Hero({ config, tagline }: { config: HeroConfig; tagline: string }) {
+interface HeroProps {
+  config: HeroConfig;
+  tagline: string;
+  /** Background video URL (backend-managed; falls back to the bundled asset). */
+  videoUrl?: string | null;
+  /** Poster image shown before the video loads / when motion is reduced. */
+  poster?: string | null;
+  /** Dark overlay strength over the video, 0–1. */
+  overlayOpacity?: number;
+}
+
+export function Hero({ config, tagline, videoUrl, poster, overlayOpacity = 0.55 }: HeroProps) {
   const primary = config.primary_cta ?? { label: "Get a Free Quote", href: "/contact" };
   const secondary = config.secondary_cta;
+  const hasVideo = Boolean(videoUrl);
 
   return (
     <section className="relative flex min-h-[92vh] items-center overflow-hidden">
-      {/* Ambient mesh + grid backdrop (design-system fallback for the legacy hero video) */}
-      <div className="absolute inset-0 bg-hero-mesh" />
-      <div
-        className="absolute inset-0 opacity-[0.05]"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.6) 1px,transparent 1px)",
-          backgroundSize: "44px 44px",
-          maskImage: "radial-gradient(70% 70% at 50% 30%, #000 0%, transparent 80%)",
-        }}
-      />
-      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-ink" />
+      {/* Background: video when available, otherwise the animated mesh fallback */}
+      {hasVideo ? (
+        <>
+          <video
+            className="absolute inset-0 h-full w-full object-cover motion-reduce:hidden"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            poster={poster || undefined}
+            aria-hidden
+          >
+            <source src={videoUrl!} type="video/mp4" />
+          </video>
+          {/* Static poster for reduced-motion users (video is hidden above) */}
+          {poster ? (
+            <div
+              className="absolute inset-0 hidden bg-cover bg-center motion-reduce:block"
+              style={{ backgroundImage: `url(${poster})` }}
+              aria-hidden
+            />
+          ) : null}
+          {/* Readability overlays */}
+          <div className="absolute inset-0 bg-ink" style={{ opacity: overlayOpacity }} aria-hidden />
+          <div className="absolute inset-0 bg-gradient-to-b from-ink/40 via-transparent to-ink" aria-hidden />
+          <div className="absolute inset-0 bg-hero-mesh opacity-60" aria-hidden />
+        </>
+      ) : (
+        <>
+          <div className="absolute inset-0 bg-hero-mesh" aria-hidden />
+          <div
+            className="absolute inset-0 opacity-[0.05]"
+            style={{
+              backgroundImage:
+                "linear-gradient(rgba(255,255,255,.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.6) 1px,transparent 1px)",
+              backgroundSize: "44px 44px",
+              maskImage: "radial-gradient(70% 70% at 50% 30%, #000 0%, transparent 80%)",
+            }}
+            aria-hidden
+          />
+        </>
+      )}
+      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-ink" aria-hidden />
 
       <div className="container-x relative pt-28 sm:pt-24">
         <div className="mx-auto max-w-3xl text-center">
           {config.badge ? (
             <motion.span
               {...fade(0)}
-              className="inline-flex items-center gap-2 rounded-full border border-primary/35 bg-primary/10 px-4 py-1.5 text-xs font-medium text-content"
+              className="inline-flex items-center gap-2 rounded-full border border-primary/35 bg-primary/10 px-4 py-1.5 text-xs font-medium text-content backdrop-blur-sm"
             >
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
               {config.badge}
