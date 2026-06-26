@@ -58,11 +58,11 @@ export function Hero({ config, tagline, imageUrl, videoUrl, overlayOpacity = 0.6
         <div className="absolute inset-0 bg-hero-mesh" aria-hidden />
       )}
 
-      {/* Readability overlays tuned for white text on a photo */}
+      {/* Readability overlays — kept light so the photo stays clearly visible,
+          while a vertical gradient anchors the navbar (top) and section blend (bottom). */}
       <div className="absolute inset-0 bg-ink" style={{ opacity: overlayOpacity }} aria-hidden />
-      <div className="absolute inset-0 bg-gradient-to-b from-ink/70 via-ink/40 to-ink" aria-hidden />
-      <div className="absolute inset-0 bg-hero-mesh opacity-50 mix-blend-screen" aria-hidden />
-      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-ink" aria-hidden />
+      <div className="absolute inset-0 bg-gradient-to-b from-ink/50 via-transparent to-ink" aria-hidden />
+      <div className="absolute inset-0 bg-hero-mesh opacity-40 mix-blend-screen" aria-hidden />
 
       <div className="container-x relative pt-28 sm:pt-24">
         <div className="mx-auto max-w-3xl text-center">

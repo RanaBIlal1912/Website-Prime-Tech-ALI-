@@ -50,7 +50,7 @@ export default async function HomePage() {
   const heroImage = resolveImage(homeBg?.image_url) || "/hero-bg.jpg";
   const heroVideo =
     homeBg?.bg_type === "video" ? resolveImage(homeBg?.video_url) : null;
-  const heroOverlay = homeBg?.overlay_opacity ? Math.max(homeBg.overlay_opacity, 0.5) : 0.6;
+  const heroOverlay = homeBg?.overlay_opacity ? Math.min(homeBg.overlay_opacity, 0.5) : 0.45;
   const hero = (sectionByKey(sections, "hero")?.config as HeroConfig) || {};
   const stats = (sectionByKey(sections, "stats")?.config?.items as StatItem[]) || [];
   const whyUs = sectionByKey(sections, "why-us")?.config as { items?: IconTextItem[]; subtitle?: string } | undefined;
