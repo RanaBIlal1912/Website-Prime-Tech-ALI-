@@ -1,0 +1,54 @@
+import type { Metadata } from "next";
+import { PageHero, EmptyState } from "@/components/ui";
+import { Explorer, type ExplorerEntry } from "@/components/Explorer";
+import { ProductCard } from "@/components/cards";
+import { JsonLd } from "@/components/JsonLd";
+import { getProducts } from "@/lib/data";
+import { buildMetadata } from "@/lib/seo";
+import { breadcrumbSchema } from "@/lib/schema";
+
+export const revalidate = 300;
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({ path: "/products" });
+}
+
+export default async function ProductsPage() {
+  const products = await getProducts();
+
+  const entries: ExplorerEntry[] = products.map((p) => ({
+    id: p.id,
+    category: p.category_name || null,
+    searchText: `${p.name} ${p.description} ${p.category_name ?? ""}`.toLowerCase(),
+    node: <ProductCard product={p} />,
+  }));
+
+  return (
+    <>
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: "Home", path: "/" },
+          { name: "Products", path: "/products" },
+        ])}
+      />
+      <PageHero
+        eyebrow="Products"
+        title="Genuine security & networking hardware"
+        subtitle="CCTV cameras, DVRs, network switches and routers — authentic, warranty-backed equipment with full after-sales support."
+      />
+      <section className="section">
+        <div className="container-x">
+          {products.length === 0 ? (
+            <EmptyState title="Products are being updated" hint="Please check back shortly or contact us for a custom quote." />
+          ) : (
+            <Explorer
+              entries={entries}
+              searchPlaceholder="Search products…"
+              gridClassName="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
+            />
+          )}
+        </div>
+      </section>
+    </>
+  );
+}

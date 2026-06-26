@@ -1,0 +1,38 @@
+# =============================================================================
+# Prime Tech — Next.js Frontend : Requirements
+# =============================================================================
+# NOTE: This is a Node.js project. The authoritative, machine-readable
+# dependency manifest is package.json, and the locked versions are in
+# package-lock.json. Install everything with:
+#
+#     npm install        # (or: npm ci  — for a clean, lockfile-exact install)
+#
+# This file documents the same requirements in plain text for quick reference.
+# -----------------------------------------------------------------------------
+
+# ----------------------------- System prerequisites --------------------------
+node>=18.18            # recommended: Node 20 or 22 LTS
+npm>=10
+
+# ----------------------------- Runtime dependencies --------------------------
+next==15.1.7                       # React framework (App Router, SSR/SSG/ISR)
+react==^19.0.0                     # UI library
+react-dom==^19.0.0                 # React DOM renderer
+@tanstack/react-query==^5.59.20    # client-side data fetching / mutations
+axios==^1.7.9                      # HTTP client (contact form -> backend API)
+framer-motion==^11.15.0            # animations / motion
+
+# ----------------------------- Dev / build dependencies ----------------------
+typescript==^5.7.3                 # type system
+@types/node==^20.17.12             # Node type definitions
+@types/react==^19.0.7              # React type definitions
+@types/react-dom==^19.0.3          # React DOM type definitions
+tailwindcss==^3.4.17               # utility-first CSS
+postcss==^8.5.1                    # CSS processing (Tailwind pipeline)
+autoprefixer==^10.4.20             # vendor prefixing
+eslint==^9.18.0                    # linter
+eslint-config-next==15.1.7         # Next.js ESLint rules
+
+# ----------------------------- Backend requirement ---------------------------
+# The frontend needs the Django backend running and reachable at the URL set in
+# .env.local (NEXT_PUBLIC_API_BASE_URL / API_BASE_URL). See backend/requirements.txt.
