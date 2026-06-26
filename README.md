@@ -16,16 +16,17 @@ and the phased build plan. This README is the operational guide.
 
 | Delivered (this phase) | Planned (next phases) |
 |------------------------|-----------------------|
-| Django 5 + DRF backend, split settings | Next.js + Tailwind public site (design system ported from `legacy/`) |
-| PostgreSQL schema — all 16+ entities, migrated | Admin dashboard UI (React) + live page builder |
-| JWT auth (access+refresh, rotation, blacklist) | 2FA enforcement (model + flow are already 2FA-ready) |
-| RBAC: 5 seeded roles, runtime-editable permissions | CI pipeline, automated backups, perf/CDN tuning |
+| Django 5 + DRF backend, split settings | Admin dashboard UI (React) + live page builder |
+| PostgreSQL schema — all 16+ entities, migrated | 2FA enforcement (model + flow are already 2FA-ready) |
+| JWT auth (access+refresh, rotation, blacklist) | CI pipeline, automated backups, perf/CDN tuning |
+| RBAC: 5 seeded roles, runtime-editable permissions | Real media uploads + brochure/PDF download UI |
 | CRM (leads, customers, notes, follow-ups, timeline) | |
 | Quotations (auto-number, tax/discount, **PDF export**) | |
 | Support tickets, Catalog, Portfolio, Blog, Media — real CRUD APIs | |
 | Audit logging, login lockout, throttling | |
 | OpenAPI docs, Docker/Nginx, seed from legacy data | |
 | Automated test suite (13 tests, passing) | |
+| **Next.js 15 + Tailwind public website** (`frontend-nextjs/`) — all pages wired to live APIs, SEO, lead form | |
 
 The legacy static site is preserved under [`legacy/`](./legacy) as design + content reference.
 
@@ -63,6 +64,39 @@ RUN_SEED=true docker compose up --build   # first run seeds; set RUN_SEED=false 
 ```
 Nginx serves on `:80` (uncomment the `:443` block in `nginx/conf.d/primetech.conf`
 after placing certs in `nginx/certs/` — e.g. from Let's Encrypt/Certbot).
+
+## Frontend (Next.js) — run the website
+
+The public website lives in [`frontend-nextjs/`](./frontend-nextjs) (Next.js 15 + TypeScript +
+Tailwind). It reads all content from the backend API, so **start the backend first**.
+
+```bash
+# 1. From the repo root, with the backend already running (see Quickstart above):
+cd frontend-nextjs
+
+# 2. Install dependencies (first time only)
+npm install
+
+# 3. Configure the API URL (per-machine; .env.local is git-ignored)
+cp .env.example .env.local
+# Edit .env.local so the API base URLs point at YOUR backend port.
+# IMPORTANT: this must match the port you ran the backend on
+# (e.g. 8001 — pick a free port if 8000/8009 are taken by another app):
+#   API_BASE_URL=http://127.0.0.1:8001/api/v1
+#   NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8001/api/v1
+
+# 4a. Development (hot reload)
+npm run dev          # -> http://localhost:3000
+
+# 4b. Production build
+npm run build && npm run start    # PORT=3002 npm run start to use another port
+```
+
+- Dev/site URL: `http://localhost:3000`
+- Other scripts: `npm run lint`, `npm run typecheck`
+- Troubleshooting: if pages are blank/unstyled, the backend isn't reachable at the
+  configured API URL, or a stale dev server is running — stop it, `rm -rf .next`, and
+  `npm run dev` again. Full details in [`frontend-nextjs/README.txt`](./frontend-nextjs/README.txt).
 
 ---
 
