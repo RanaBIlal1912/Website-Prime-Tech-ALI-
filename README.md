@@ -98,6 +98,62 @@ npm run build && npm run start    # PORT=3002 npm run start to use another port
   configured API URL, or a stale dev server is running — stop it, `rm -rf .next`, and
   `npm run dev` again. Full details in [`frontend-nextjs/README.txt`](./frontend-nextjs/README.txt).
 
+### Frontend setup for non-technical users (plain steps)
+
+No coding needed — just copy/paste each line into a terminal (Terminal on Mac, or
+PowerShell on Windows) and press Enter. Do the steps **in order**. You only do the
+"first time" steps once; after that, skip to "Every time you want to run it".
+
+**Before you start — install these once** (download + click through the installer):
+1. **Node.js** (the "LTS" version) — https://nodejs.org
+2. **Docker Desktop** — https://www.docker.com/products/docker-desktop
+3. **Python** — https://www.python.org/downloads
+
+**First time only — set everything up:**
+```bash
+# 1. Start the database
+docker run -d --name primetech-db -p 5544:5432 \
+  -e POSTGRES_USER=primetech -e POSTGRES_PASSWORD=primetech -e POSTGRES_DB=primetech \
+  postgres:16-alpine
+
+# 2. Set up the backend (the "brain" that holds the content)
+cd backend
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env
+python manage.py migrate
+python manage.py seed              # fills the site with starter content
+
+# 3. Set up the website
+cd ../frontend-nextjs
+npm install
+cp .env.example .env.local         # this file tells the site where the backend is
+```
+
+**Every time you want to run it** (two terminal windows):
+```bash
+# Terminal 1 — backend
+docker start primetech-db
+cd backend
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+python manage.py runserver 127.0.0.1:8000
+
+# Terminal 2 — website
+cd frontend-nextjs
+npm run dev
+```
+Then open **http://localhost:3000** in your browser. To stop, press `Ctrl + C` in each terminal.
+
+**If the middle of the page looks empty (only the top menu and bottom footer):**
+the website can't reach the backend. Make sure Terminal 1 (the backend) is running, and
+that the port number in `frontend-nextjs/.env.local` is the **same** as the one in the
+backend command above (both `8000`). Save the file, then in Terminal 2 press `Ctrl + C`
+and run `npm run dev` again.
+
+> Tip: if `8000` is already used by another program, pick another number (e.g. `8010`)
+> in **both** the backend `runserver` command and `.env.local`, then restart both.
+
 ---
 
 ## API reference (v1)
