@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -14,21 +15,34 @@ const fade = (delay: number) => ({
 interface HeroProps {
   config: HeroConfig;
   tagline: string;
-  /** Background image URL (backend-managed; falls back to the bundled asset). */
-  imageUrl?: string | null;
-  /** Optional background video URL — overrides the image when set. */
+  /** Background image slideshow (1+ images). Cycles with a crossfade. */
+  images?: string[];
+  /** Optional background video URL — overrides the image slideshow when set. */
   videoUrl?: string | null;
   /** Dark overlay strength over the media, 0–1. */
   overlayOpacity?: number;
+  /** Seconds between slides. */
+  interval?: number;
 }
 
-export function Hero({ config, tagline, imageUrl, videoUrl, overlayOpacity = 0.6 }: HeroProps) {
+export function Hero({ config, tagline, images = [], videoUrl, overlayOpacity = 0.6, interval = 5 }: HeroProps) {
   const primary = config.primary_cta ?? { label: "Get a Free Quote", href: "/contact" };
   const secondary = config.secondary_cta;
+  const slides = images.filter(Boolean);
+  const [index, setIndex] = useState(0);
+
+  // Auto-advance the slideshow, unless there's a video, only one image, or the
+  // user prefers reduced motion.
+  useEffect(() => {
+    if (videoUrl || slides.length <= 1) return;
+    if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    const id = window.setInterval(() => setIndex((i) => (i + 1) % slides.length), interval * 1000);
+    return () => window.clearInterval(id);
+  }, [videoUrl, slides.length, interval]);
 
   return (
     <section className="relative flex min-h-[92vh] items-center overflow-hidden">
-      {/* Background media: optional video overrides the image; image is the default. */}
+      {/* Background media: video overrides; otherwise an image slideshow; else mesh. */}
       {videoUrl ? (
         <video
           className="absolute inset-0 h-full w-full object-cover motion-reduce:hidden"
@@ -37,29 +51,29 @@ export function Hero({ config, tagline, imageUrl, videoUrl, overlayOpacity = 0.6
           loop
           playsInline
           preload="metadata"
-          poster={imageUrl || undefined}
+          poster={slides[0]}
           aria-hidden
         >
           <source src={videoUrl} type="video/mp4" />
         </video>
-      ) : null}
-
-      {imageUrl ? (
-        <Image
-          src={imageUrl}
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className={`object-cover ${videoUrl ? "motion-reduce:block hidden" : ""}`}
-          aria-hidden
-        />
+      ) : slides.length > 0 ? (
+        slides.map((src, i) => (
+          <motion.div
+            key={src}
+            className="absolute inset-0"
+            initial={false}
+            animate={{ opacity: i === index ? 1 : 0 }}
+            transition={{ duration: 1, ease: "easeInOut" }}
+            aria-hidden
+          >
+            <Image src={src} alt="" fill priority={i === 0} sizes="100vw" className="object-cover" />
+          </motion.div>
+        ))
       ) : (
         <div className="absolute inset-0 bg-hero-mesh" aria-hidden />
       )}
 
-      {/* Readability overlays — kept light so the photo stays clearly visible,
-          while a vertical gradient anchors the navbar (top) and section blend (bottom). */}
+      {/* Readability overlays tuned for white text on a photo */}
       <div className="absolute inset-0 bg-ink" style={{ opacity: overlayOpacity }} aria-hidden />
       <div className="absolute inset-0 bg-gradient-to-b from-ink/50 via-transparent to-ink" aria-hidden />
       <div className="absolute inset-0 bg-hero-mesh opacity-40 mix-blend-screen" aria-hidden />
@@ -81,9 +95,7 @@ export function Hero({ config, tagline, imageUrl, videoUrl, overlayOpacity = 0.6
             className="mt-6 text-4xl font-extrabold leading-[1.08] tracking-tight text-content drop-shadow-[0_2px_20px_rgba(0,0,0,0.6)] sm:text-6xl"
           >
             {config.title || "Enterprise Security & IT Infrastructure"}
-            {config.highlight ? (
-              <span className="mt-2 block gradient-text">{config.highlight}</span>
-            ) : null}
+            {config.highlight ? <span className="mt-2 block gradient-text">{config.highlight}</span> : null}
           </motion.h1>
 
           <motion.p {...fade(0.2)} className="mx-auto mt-6 max-w-2xl text-base text-content-muted sm:text-lg">
@@ -100,8 +112,27 @@ export function Hero({ config, tagline, imageUrl, videoUrl, overlayOpacity = 0.6
               </Link>
             ) : null}
           </motion.div>
+
+          {/* Slide indicators */}
+          {!videoUrl && slides.length > 1 ? (
+            <div className="mt-10 flex items-center justify-center gap-2" role="tablist" aria-label="Hero slides">
+              {slides.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  role="tab"
+                  aria-selected={i === index}
+                  aria-label={`Show slide ${i + 1}`}
+                  onClick={() => setIndex(i)}
+                  className={`h-1.5 rounded-full transition-all ${i === index ? "w-7 bg-primary" : "w-2.5 bg-white/30 hover:bg-white/50"}`}
+                />
+              ))}
+            </div>
+          ) : null}
         </div>
       </div>
+
+      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-ink" aria-hidden />
     </section>
   );
 }

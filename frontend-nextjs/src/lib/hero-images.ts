@@ -2,6 +2,15 @@
 // Used for each page's hero and as a per-service fallback when a service has no
 // admin-set featured_image.
 
+// Default homepage hero slideshow — a few varied, on-brand photos that fade in
+// rotation. Admin can override via the hero section config `images` array.
+export const HOME_HERO_IMAGES = [
+  "/hero-bg.jpg",
+  "/heroes/cctv.jpg",
+  "/heroes/networking.jpg",
+  "/heroes/access.jpg",
+];
+
 export const PAGE_HEROES = {
   services: "/heroes/cctv.jpg",
   products: "/heroes/hardware.jpg",

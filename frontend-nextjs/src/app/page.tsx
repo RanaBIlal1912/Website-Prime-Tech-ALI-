@@ -38,6 +38,7 @@ import {
   DEFAULT_WHYUS,
   toService,
 } from "@/lib/home-defaults";
+import { HOME_HERO_IMAGES } from "@/lib/hero-images";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({ path: "/" });
@@ -61,13 +62,19 @@ export default async function HomePage() {
   // verbatim and an empty/cleared section simply hides — the admin stays in control.
   const useDefaults = !reachable;
 
-  // Hero background: real image by default; a video only when bg_type=video.
-  const heroImage = resolveImage(homeBg?.image_url) || "/hero-bg.jpg";
-  const heroVideo = homeBg?.bg_type === "video" ? resolveImage(homeBg?.video_url) : null;
-  const heroOverlay = homeBg?.overlay_opacity != null ? Math.min(homeBg.overlay_opacity, 0.5) : 0.45;
-
   const cmsHero = (sectionByKey(sections, "hero")?.config as HeroConfig) || {};
   const hero: HeroConfig = useDefaults ? DEFAULT_HERO : cmsHero;
+
+  // Hero background slideshow: admin-managed image list when set, otherwise the
+  // single PageBackground image, otherwise the default multi-image slideshow.
+  // A video (bg_type=video) overrides the images.
+  const cmsImages = Array.isArray(cmsHero.images)
+    ? cmsHero.images.map(resolveImage).filter((x): x is string => Boolean(x))
+    : [];
+  const bgImage = resolveImage(homeBg?.image_url);
+  const heroImages = cmsImages.length > 0 ? cmsImages : bgImage ? [bgImage] : HOME_HERO_IMAGES;
+  const heroVideo = homeBg?.bg_type === "video" ? resolveImage(homeBg?.video_url) : null;
+  const heroOverlay = homeBg?.overlay_opacity != null ? Math.min(homeBg.overlay_opacity, 0.5) : 0.45;
 
   const cmsStats = (sectionByKey(sections, "stats")?.config?.items as StatItem[] | undefined) || [];
   const stats = useDefaults ? DEFAULT_STATS : cmsStats;
@@ -99,7 +106,7 @@ export default async function HomePage() {
         <Hero
           config={hero}
           tagline={tagline}
-          imageUrl={heroImage}
+          images={heroImages}
           videoUrl={heroVideo}
           overlayOpacity={heroOverlay}
         />
