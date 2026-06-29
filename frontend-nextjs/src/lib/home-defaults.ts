@@ -1,7 +1,7 @@
 // Graceful-degradation defaults for the homepage. These mirror the backend seed
 // content and are used ONLY when the CMS (home-sections) is unreachable or empty,
 // so the page is never blank. When the backend returns data, it takes precedence.
-import type { CtaSectionConfig, HeroConfig, IconTextItem, IndustryItem, StatItem } from "./types";
+import type { CtaSectionConfig, HeroConfig, IconTextItem, IndustryItem, Service, StatItem } from "./types";
 
 export const DEFAULT_SECTION_ORDER = [
   "hero",
@@ -62,9 +62,17 @@ export const DEFAULT_CTA: CtaSectionConfig = {
   primary_cta: { label: "Get Started", href: "/contact" },
 };
 
-// Services/projects/testimonials shown when the catalog/portfolio APIs are empty,
-// so the homepage still demonstrates the offering. Replaced by live data when present.
-export const DEFAULT_SERVICES: Array<{ icon: string; title: string; short_desc: string; slug: string }> = [
+// Services shown ONLY when the catalog API is unreachable (degraded mode), so the
+// homepage still demonstrates the offering. When the backend is reachable, live data
+// is used and an empty list hides the section instead (admin stays in control).
+export interface DefaultService {
+  icon: string;
+  title: string;
+  short_desc: string;
+  slug: string;
+}
+
+export const DEFAULT_SERVICES: DefaultService[] = [
   { icon: "📹", title: "CCTV Camera Installation", slug: "cctv-camera-installation", short_desc: "Complete CCTV setup for homes, offices, shops & warehouses with night vision & remote viewing." },
   { icon: "🌐", title: "Networking & IT Infrastructure", slug: "networking-it-infrastructure", short_desc: "Structured cabling, LAN/WAN setup, WiFi networks and enterprise-grade networking solutions." },
   { icon: "🔐", title: "Access Control & Biometrics", slug: "access-control-biometrics", short_desc: "Biometric access control, alarm systems and integrated security for your premises." },
@@ -72,3 +80,31 @@ export const DEFAULT_SERVICES: Array<{ icon: string; title: string; short_desc: 
   { icon: "🛒", title: "Hardware Sales & Support", slug: "hardware-sales-support", short_desc: "Genuine routers, switches, DVRs, cameras and IT hardware with after-sales support." },
   { icon: "🛠️", title: "Maintenance & AMC", slug: "maintenance-amc", short_desc: "Annual maintenance contracts for CCTV & networking systems with quick response." },
 ];
+
+// Adapt a fallback entry into a Service-shaped object so it can render through the
+// shared <ServiceCard> (the card is pointed at the /services list, not a per-slug
+// detail page, since those would 404 while the backend is unreachable).
+export function toService(d: DefaultService): Service {
+  return {
+    id: d.slug,
+    title: d.title,
+    slug: d.slug,
+    icon: d.icon,
+    short_desc: d.short_desc,
+    description: d.short_desc,
+    benefits: [],
+    faqs: [],
+    category: null,
+    category_name: null,
+    featured_image: "",
+    banner_image: "",
+    background_image: "",
+    background_video: "",
+    gallery: [],
+    seo_title: "",
+    seo_description: "",
+    is_published: true,
+    is_featured: true,
+    order: 0,
+  };
+}

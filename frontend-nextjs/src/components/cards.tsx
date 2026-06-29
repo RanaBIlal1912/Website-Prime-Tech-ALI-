@@ -3,9 +3,9 @@ import { Media } from "./Media";
 import type { BlogPost, Product, Project, Service, Testimonial } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
 
-export function ServiceCard({ service }: { service: Service }) {
+export function ServiceCard({ service, href }: { service: Service; href?: string }) {
   return (
-    <Link href={`/services/${service.slug}`} className="card group flex flex-col overflow-hidden">
+    <Link href={href ?? `/services/${service.slug}`} className="card group flex h-full flex-col overflow-hidden">
       <Media
         src={service.featured_image}
         alt={service.title}

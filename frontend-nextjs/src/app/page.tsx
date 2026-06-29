@@ -5,7 +5,6 @@ import { StatsCounter } from "@/components/StatsCounter";
 import { WhyUs, IndustriesStrip, CtaBanner } from "@/components/home/sections";
 import { SectionHeading } from "@/components/SectionHeading";
 import { Reveal } from "@/components/Reveal";
-import { Media } from "@/components/Media";
 import { ServiceCard, ProjectCard, TestimonialCard } from "@/components/cards";
 import { JsonLd } from "@/components/JsonLd";
 import {
@@ -15,6 +14,7 @@ import {
   getServices,
   getSiteSettings,
   getTestimonials,
+  isBackendReachable,
   sectionByKey,
 } from "@/lib/data";
 import { resolveImage } from "@/lib/utils";
@@ -36,6 +36,7 @@ import {
   DEFAULT_SERVICES,
   DEFAULT_STATS,
   DEFAULT_WHYUS,
+  toService,
 } from "@/lib/home-defaults";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -43,7 +44,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [sections, settings, services, projects, testimonials, homeBg] = await Promise.all([
+  const [reachable, sections, settings, services, projects, testimonials, homeBg] = await Promise.all([
+    isBackendReachable(),
     getHomeSections(),
     getSiteSettings(),
     getServices({ featured: true }),
@@ -54,26 +56,36 @@ export default async function HomePage() {
 
   const tagline = settings?.tagline || BRAND_FALLBACK.tagline;
 
-  // Hero background: a real image by default (admin-managed via PageBackground.image_url,
-  // falling back to the bundled brand photo). A video only kicks in when bg_type=video.
+  // Built-in defaults are used ONLY when the backend is unreachable (degraded mode),
+  // so the page is never blank. When the backend IS reachable, live CMS data is used
+  // verbatim and an empty/cleared section simply hides — the admin stays in control.
+  const useDefaults = !reachable;
+
+  // Hero background: real image by default; a video only when bg_type=video.
   const heroImage = resolveImage(homeBg?.image_url) || "/hero-bg.jpg";
   const heroVideo = homeBg?.bg_type === "video" ? resolveImage(homeBg?.video_url) : null;
-  const heroOverlay = homeBg?.overlay_opacity ? Math.min(homeBg.overlay_opacity, 0.5) : 0.45;
+  const heroOverlay = homeBg?.overlay_opacity != null ? Math.min(homeBg.overlay_opacity, 0.5) : 0.45;
 
-  // Merge CMS config with built-in defaults so the homepage is NEVER blank, even when
-  // the backend is unreachable/unseeded. Live CMS data always takes precedence.
-  const hero: HeroConfig = { ...DEFAULT_HERO, ...((sectionByKey(sections, "hero")?.config as HeroConfig) || {}) };
+  const cmsHero = (sectionByKey(sections, "hero")?.config as HeroConfig) || {};
+  const hero: HeroConfig = useDefaults ? DEFAULT_HERO : cmsHero;
 
-  const cmsStats = sectionByKey(sections, "stats")?.config?.items as StatItem[] | undefined;
-  const stats = cmsStats?.length ? cmsStats : DEFAULT_STATS;
+  const cmsStats = (sectionByKey(sections, "stats")?.config?.items as StatItem[] | undefined) || [];
+  const stats = useDefaults ? DEFAULT_STATS : cmsStats;
 
-  const cmsWhy = sectionByKey(sections, "why-us")?.config as { items?: IconTextItem[]; subtitle?: string } | undefined;
-  const whyUs = cmsWhy?.items?.length ? cmsWhy : DEFAULT_WHYUS;
+  const cmsWhy = (sectionByKey(sections, "why-us")?.config as { items?: IconTextItem[]; subtitle?: string }) || {};
+  const whyUs = useDefaults ? DEFAULT_WHYUS : cmsWhy;
 
-  const cmsInd = sectionByKey(sections, "industries")?.config as { items?: IndustryItem[]; subtitle?: string } | undefined;
-  const industries = cmsInd?.items?.length ? cmsInd : DEFAULT_INDUSTRIES;
+  const cmsInd = (sectionByKey(sections, "industries")?.config as { items?: IndustryItem[]; subtitle?: string }) || {};
+  const industries = useDefaults ? DEFAULT_INDUSTRIES : cmsInd;
 
-  const cta: CtaSectionConfig = { ...DEFAULT_CTA, ...((sectionByKey(sections, "cta")?.config as CtaSectionConfig) || {}) };
+  const cmsCta = (sectionByKey(sections, "cta")?.config as CtaSectionConfig) || {};
+  const cta = useDefaults ? DEFAULT_CTA : cmsCta;
+
+  // Services to display: live data when reachable, fallback list only in degraded mode.
+  // Fallback cards link to the /services list (not per-slug detail pages, which 404
+  // while the backend is down).
+  const displayServices = useDefaults ? DEFAULT_SERVICES.map(toService) : services.slice(0, 6);
+  const serviceHref = useDefaults ? "/services" : undefined;
 
   // Section order/enablement comes from the CMS when present; otherwise a sensible default.
   const orderedKeys = sections.length ? sections.map((s) => s.key) : DEFAULT_SECTION_ORDER;
@@ -93,13 +105,13 @@ export default async function HomePage() {
         />
       )}
 
-      {has("stats") && (
+      {has("stats") && stats.length > 0 && (
         <section className="container-x relative z-10 -mt-20 pb-4">
           <StatsCounter items={stats} />
         </section>
       )}
 
-      {has("services") && (
+      {has("services") && displayServices.length > 0 && (
         <section className="section">
           <div className="container-x">
             <SectionHeading
@@ -107,33 +119,13 @@ export default async function HomePage() {
               title="Comprehensive security & IT services"
               subtitle="From CCTV and access control to enterprise networking — delivered end-to-end."
             />
-            {services.length > 0 ? (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {services.slice(0, 6).map((service, i) => (
-                  <Reveal key={service.id} index={i}>
-                    <ServiceCard service={service} />
-                  </Reveal>
-                ))}
-              </div>
-            ) : (
-              // Fallback when the catalog API is empty/unreachable.
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {DEFAULT_SERVICES.map((s, i) => (
-                  <Reveal key={s.slug} index={i}>
-                    <Link href={`/services/${s.slug}`} className="card group flex h-full flex-col overflow-hidden">
-                      <Media src={null} alt={s.title} seed={s.slug} icon={s.icon} className="aspect-[16/10] w-full" />
-                      <div className="flex flex-1 flex-col p-6">
-                        <h3 className="text-lg font-bold text-content transition-colors group-hover:text-primary">{s.title}</h3>
-                        <p className="mt-2 line-clamp-3 flex-1 text-sm text-content-muted">{s.short_desc}</p>
-                        <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-primary">
-                          Learn more <span aria-hidden>→</span>
-                        </span>
-                      </div>
-                    </Link>
-                  </Reveal>
-                ))}
-              </div>
-            )}
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {displayServices.map((service, i) => (
+                <Reveal key={service.id} index={i}>
+                  <ServiceCard service={service} href={serviceHref} />
+                </Reveal>
+              ))}
+            </div>
             <div className="mt-10 text-center">
               <Link href="/services" className="btn-ghost">
                 View all services
@@ -143,7 +135,9 @@ export default async function HomePage() {
         </section>
       )}
 
-      {has("why-us") && <WhyUs items={whyUs.items || []} subtitle={whyUs.subtitle} />}
+      {has("why-us") && (whyUs.items?.length ?? 0) > 0 && (
+        <WhyUs items={whyUs.items || []} subtitle={whyUs.subtitle} />
+      )}
 
       {has("projects") && projects.length > 0 && (
         <section className="section">
@@ -184,9 +178,11 @@ export default async function HomePage() {
         </section>
       )}
 
-      {has("industries") && <IndustriesStrip items={industries.items || []} subtitle={industries.subtitle} />}
+      {has("industries") && (industries.items?.length ?? 0) > 0 && (
+        <IndustriesStrip items={industries.items || []} subtitle={industries.subtitle} />
+      )}
 
-      {has("cta") && <CtaBanner config={cta} />}
+      {has("cta") && (cta.title || cta.subtitle) && <CtaBanner config={cta} />}
     </>
   );
 }
