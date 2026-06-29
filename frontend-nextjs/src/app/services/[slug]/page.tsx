@@ -11,6 +11,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { getService, getServices, getSiteSettings } from "@/lib/data";
 import { buildMetadata } from "@/lib/seo";
 import { breadcrumbSchema, faqSchema, serviceSchema } from "@/lib/schema";
+import { serviceHeroImage } from "@/lib/hero-images";
 
 export const revalidate = 300;
 
@@ -41,6 +42,8 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
   if (!service) notFound();
 
   const related = (await getServices()).filter((s) => s.slug !== service.slug).slice(0, 3);
+  // Themed photo per service, used when the admin hasn't set a featured_image.
+  const heroImg = service.featured_image || serviceHeroImage(service.slug);
   const crumbs = [
     { name: "Home", path: "/" },
     { name: "Services", path: "/services" },
@@ -81,7 +84,7 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
             </div>
           </div>
           <Media
-            src={service.featured_image}
+            src={heroImg}
             alt={service.title}
             seed={service.slug}
             icon={service.icon || "🛡️"}

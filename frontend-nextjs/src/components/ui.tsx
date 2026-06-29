@@ -1,5 +1,6 @@
 // Small shared UI primitives used across pages.
 import Link from "next/link";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 export function Spinner({ className }: { className?: string }) {
@@ -19,16 +20,27 @@ export function PageHero({
   eyebrow,
   title,
   subtitle,
+  image,
 }: {
   eyebrow?: string;
   title: string;
   subtitle?: string;
+  /** optional background image (rendered behind a dark overlay for readability) */
+  image?: string;
 }) {
   return (
     <section className="relative overflow-hidden border-b border-white/[0.06] bg-hero-mesh pt-28 sm:pt-32">
-      <div className="container-x pb-14 pt-6 text-center sm:pb-16">
+      {image ? (
+        <>
+          <Image src={image} alt="" fill priority sizes="100vw" className="object-cover" aria-hidden />
+          <div className="absolute inset-0 bg-ink/70" aria-hidden />
+          <div className="absolute inset-0 bg-gradient-to-b from-ink/80 via-ink/50 to-ink" aria-hidden />
+          <div className="absolute inset-0 bg-hero-mesh opacity-50 mix-blend-screen" aria-hidden />
+        </>
+      ) : null}
+      <div className="container-x relative pb-14 pt-6 text-center sm:pb-16">
         {eyebrow ? <span className="eyebrow">{eyebrow}</span> : null}
-        <h1 className="mx-auto mt-3 max-w-3xl text-4xl font-extrabold tracking-tight text-content sm:text-5xl">
+        <h1 className="mx-auto mt-3 max-w-3xl text-4xl font-extrabold tracking-tight text-content drop-shadow-[0_2px_16px_rgba(0,0,0,0.6)] sm:text-5xl">
           {title}
         </h1>
         {subtitle ? (

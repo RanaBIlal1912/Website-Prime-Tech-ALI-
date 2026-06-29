@@ -26,9 +26,9 @@ export function ServiceCard({ service, href }: { service: Service; href?: string
   );
 }
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({ product, href }: { product: Product; href?: string }) {
   return (
-    <Link href={`/products/${product.slug}`} className="card group flex flex-col overflow-hidden">
+    <Link href={href ?? `/products/${product.slug}`} className="card group flex h-full flex-col overflow-hidden">
       <div className="relative">
         <Media
           src={product.featured_image}
@@ -67,9 +67,9 @@ export function ProductCard({ product }: { product: Product }) {
   );
 }
 
-export function ProjectCard({ project }: { project: Project }) {
+export function ProjectCard({ project, href }: { project: Project; href?: string }) {
   return (
-    <Link href={`/portfolio/${project.slug}`} className="card group flex flex-col overflow-hidden">
+    <Link href={href ?? `/portfolio/${project.slug}`} className="card group flex h-full flex-col overflow-hidden">
       <Media
         src={project.featured_image}
         alt={project.title}
@@ -92,9 +92,9 @@ export function ProjectCard({ project }: { project: Project }) {
   );
 }
 
-export function PostCard({ post }: { post: BlogPost }) {
+export function PostCard({ post, href }: { post: BlogPost; href?: string }) {
   return (
-    <Link href={`/blog/${post.slug}`} className="card group flex flex-col overflow-hidden">
+    <Link href={href ?? `/blog/${post.slug}`} className="card group flex h-full flex-col overflow-hidden">
       <Media
         src={post.featured_image}
         alt={post.title}
