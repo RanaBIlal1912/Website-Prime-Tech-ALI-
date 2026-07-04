@@ -1,5 +1,8 @@
 // Typed data-access functions for Server Components. Thin wrappers over apiGet/apiList/apiOne.
-import { apiList, apiOne } from "./api";
+import { apiList, apiOne, isBackendReachable } from "./api";
+
+export { isBackendReachable };
+
 import type {
   BlogCategory,
   BlogPost,

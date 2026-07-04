@@ -6,6 +6,7 @@ import { getSiteSettings } from "@/lib/data";
 import { buildMetadata } from "@/lib/seo";
 import { breadcrumbSchema, organizationSchema } from "@/lib/schema";
 import { BRAND_FALLBACK, telLink, whatsappLink } from "@/lib/site";
+import { PAGE_HEROES } from "@/lib/hero-images";
 
 export const revalidate = 600;
 
@@ -52,6 +53,7 @@ export default async function ContactPage({
         eyebrow="Contact"
         title="Let's secure your premises"
         subtitle="Tell us what you need — CCTV, networking, access control or a full survey. We'll get back to you within one business day."
+        image={PAGE_HEROES.contact}
       />
 
       <section className="section">

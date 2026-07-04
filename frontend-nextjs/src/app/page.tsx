@@ -14,6 +14,7 @@ import {
   getServices,
   getSiteSettings,
   getTestimonials,
+  isBackendReachable,
   sectionByKey,
 } from "@/lib/data";
 import { resolveImage } from "@/lib/utils";
@@ -27,13 +28,25 @@ import type {
   StatItem,
 } from "@/lib/types";
 import { BRAND_FALLBACK } from "@/lib/site";
+import {
+  DEFAULT_CTA,
+  DEFAULT_HERO,
+  DEFAULT_INDUSTRIES,
+  DEFAULT_SECTION_ORDER,
+  DEFAULT_SERVICES,
+  DEFAULT_STATS,
+  DEFAULT_WHYUS,
+  toService,
+} from "@/lib/home-defaults";
+import { HOME_HERO_IMAGES } from "@/lib/hero-images";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({ path: "/" });
 }
 
 export default async function HomePage() {
-  const [sections, settings, services, projects, testimonials, homeBg] = await Promise.all([
+  const [reachable, sections, settings, services, projects, testimonials, homeBg] = await Promise.all([
+    isBackendReachable(),
     getHomeSections(),
     getSiteSettings(),
     getServices({ featured: true }),
@@ -44,24 +57,46 @@ export default async function HomePage() {
 
   const tagline = settings?.tagline || BRAND_FALLBACK.tagline;
 
-  // Hero background: a real image by default (admin-managed via PageBackground.image_url,
-  // falling back to the bundled brand photo). A video only kicks in when the admin sets
-  // bg_type=video AND provides a video_url.
-  const heroImage = resolveImage(homeBg?.image_url) || "/hero-bg.jpg";
-  const heroVideo =
-    homeBg?.bg_type === "video" ? resolveImage(homeBg?.video_url) : null;
-  const heroOverlay = homeBg?.overlay_opacity ? Math.min(homeBg.overlay_opacity, 0.5) : 0.45;
-  const hero = (sectionByKey(sections, "hero")?.config as HeroConfig) || {};
-  const stats = (sectionByKey(sections, "stats")?.config?.items as StatItem[]) || [];
-  const whyUs = sectionByKey(sections, "why-us")?.config as { items?: IconTextItem[]; subtitle?: string } | undefined;
-  const industries = sectionByKey(sections, "industries")?.config as
-    | { items?: IndustryItem[]; subtitle?: string }
-    | undefined;
-  const cta = (sectionByKey(sections, "cta")?.config as CtaSectionConfig) || {};
+  // Built-in defaults are used ONLY when the backend is unreachable (degraded mode),
+  // so the page is never blank. When the backend IS reachable, live CMS data is used
+  // verbatim and an empty/cleared section simply hides — the admin stays in control.
+  const useDefaults = !reachable;
 
-  // Render in the admin-defined order; unknown/disabled keys are skipped.
-  const enabledKeys = sections.map((s) => s.key);
-  const has = (key: string) => enabledKeys.includes(key);
+  const cmsHero = (sectionByKey(sections, "hero")?.config as HeroConfig) || {};
+  const hero: HeroConfig = useDefaults ? DEFAULT_HERO : cmsHero;
+
+  // Hero background slideshow: admin-managed image list when set, otherwise the
+  // single PageBackground image, otherwise the default multi-image slideshow.
+  // A video (bg_type=video) overrides the images.
+  const cmsImages = Array.isArray(cmsHero.images)
+    ? cmsHero.images.map(resolveImage).filter((x): x is string => Boolean(x))
+    : [];
+  const bgImage = resolveImage(homeBg?.image_url);
+  const heroImages = cmsImages.length > 0 ? cmsImages : bgImage ? [bgImage] : HOME_HERO_IMAGES;
+  const heroVideo = homeBg?.bg_type === "video" ? resolveImage(homeBg?.video_url) : null;
+  const heroOverlay = homeBg?.overlay_opacity != null ? Math.min(homeBg.overlay_opacity, 0.5) : 0.45;
+
+  const cmsStats = (sectionByKey(sections, "stats")?.config?.items as StatItem[] | undefined) || [];
+  const stats = useDefaults ? DEFAULT_STATS : cmsStats;
+
+  const cmsWhy = (sectionByKey(sections, "why-us")?.config as { items?: IconTextItem[]; subtitle?: string }) || {};
+  const whyUs = useDefaults ? DEFAULT_WHYUS : cmsWhy;
+
+  const cmsInd = (sectionByKey(sections, "industries")?.config as { items?: IndustryItem[]; subtitle?: string }) || {};
+  const industries = useDefaults ? DEFAULT_INDUSTRIES : cmsInd;
+
+  const cmsCta = (sectionByKey(sections, "cta")?.config as CtaSectionConfig) || {};
+  const cta = useDefaults ? DEFAULT_CTA : cmsCta;
+
+  // Services to display: live data when reachable, fallback list only in degraded mode.
+  // Fallback cards link to the /services list (not per-slug detail pages, which 404
+  // while the backend is down).
+  const displayServices = useDefaults ? DEFAULT_SERVICES.map(toService) : services.slice(0, 6);
+  const serviceHref = useDefaults ? "/services" : undefined;
+
+  // Section order/enablement comes from the CMS when present; otherwise a sensible default.
+  const orderedKeys = sections.length ? sections.map((s) => s.key) : DEFAULT_SECTION_ORDER;
+  const has = (key: string) => orderedKeys.includes(key);
 
   return (
     <>
@@ -71,19 +106,19 @@ export default async function HomePage() {
         <Hero
           config={hero}
           tagline={tagline}
-          imageUrl={heroImage}
+          images={heroImages}
           videoUrl={heroVideo}
           overlayOpacity={heroOverlay}
         />
       )}
 
       {has("stats") && stats.length > 0 && (
-        <section className="container-x -mt-20 relative z-10 pb-4">
+        <section className="container-x relative z-10 -mt-20 pb-4">
           <StatsCounter items={stats} />
         </section>
       )}
 
-      {has("services") && services.length > 0 && (
+      {has("services") && displayServices.length > 0 && (
         <section className="section">
           <div className="container-x">
             <SectionHeading
@@ -92,9 +127,9 @@ export default async function HomePage() {
               subtitle="From CCTV and access control to enterprise networking — delivered end-to-end."
             />
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {services.slice(0, 6).map((service, i) => (
+              {displayServices.map((service, i) => (
                 <Reveal key={service.id} index={i}>
-                  <ServiceCard service={service} />
+                  <ServiceCard service={service} href={serviceHref} />
                 </Reveal>
               ))}
             </div>
@@ -107,7 +142,9 @@ export default async function HomePage() {
         </section>
       )}
 
-      {has("why-us") && <WhyUs items={whyUs?.items || []} subtitle={whyUs?.subtitle} />}
+      {has("why-us") && (whyUs.items?.length ?? 0) > 0 && (
+        <WhyUs items={whyUs.items || []} subtitle={whyUs.subtitle} />
+      )}
 
       {has("projects") && projects.length > 0 && (
         <section className="section">
@@ -148,9 +185,11 @@ export default async function HomePage() {
         </section>
       )}
 
-      {has("industries") && <IndustriesStrip items={industries?.items || []} subtitle={industries?.subtitle} />}
+      {has("industries") && (industries.items?.length ?? 0) > 0 && (
+        <IndustriesStrip items={industries.items || []} subtitle={industries.subtitle} />
+      )}
 
-      {has("cta") && <CtaBanner config={cta} />}
+      {has("cta") && (cta.title || cta.subtitle) && <CtaBanner config={cta} />}
     </>
   );
 }

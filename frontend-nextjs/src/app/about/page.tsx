@@ -16,6 +16,7 @@ import {
 import { buildMetadata } from "@/lib/seo";
 import { breadcrumbSchema, organizationSchema } from "@/lib/schema";
 import { BRAND_FALLBACK } from "@/lib/site";
+import { PAGE_HEROES } from "@/lib/hero-images";
 import type { IconTextItem, IndustryItem, StatItem } from "@/lib/types";
 
 export const revalidate = 600;
@@ -64,6 +65,7 @@ export default async function AboutPage() {
         eyebrow="About Prime Tech"
         title="A trusted security & IT partner since 2018"
         subtitle={desc}
+        image={PAGE_HEROES.about}
       />
 
       {stats.length > 0 && (

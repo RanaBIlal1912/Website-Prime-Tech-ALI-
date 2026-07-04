@@ -54,6 +54,21 @@ export async function apiList<T>(
   }
 }
 
+// Probe whether the backend API is actually reachable + responding. Used to tell
+// "backend down/misconfigured" (→ show fallback content) apart from "backend up but
+// a section is legitimately empty" (→ hide that section, preserving admin control).
+export async function isBackendReachable(): Promise<boolean> {
+  try {
+    const res = await fetch(`${BASE_URL}/cms/settings/`, {
+      next: { revalidate: 60 },
+      headers: { Accept: "application/json" },
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 // Safe single fetch — returns null on 404/error so callers can notFound().
 export async function apiOne<T>(
   path: string,

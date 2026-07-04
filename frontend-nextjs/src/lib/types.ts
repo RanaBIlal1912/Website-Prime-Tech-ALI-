@@ -58,6 +58,8 @@ export interface HeroConfig {
   subtitle?: string;
   primary_cta?: CtaConfig;
   secondary_cta?: CtaConfig;
+  /** optional list of background image URLs for the hero slideshow */
+  images?: string[];
 }
 
 export interface StatItem {

@@ -16,16 +16,17 @@ and the phased build plan. This README is the operational guide.
 
 | Delivered (this phase) | Planned (next phases) |
 |------------------------|-----------------------|
-| Django 5 + DRF backend, split settings | Next.js + Tailwind public site (design system ported from `legacy/`) |
-| PostgreSQL schema — all 16+ entities, migrated | Admin dashboard UI (React) + live page builder |
-| JWT auth (access+refresh, rotation, blacklist) | 2FA enforcement (model + flow are already 2FA-ready) |
-| RBAC: 5 seeded roles, runtime-editable permissions | CI pipeline, automated backups, perf/CDN tuning |
+| Django 5 + DRF backend, split settings | Admin dashboard UI (React) + live page builder |
+| PostgreSQL schema — all 16+ entities, migrated | 2FA enforcement (model + flow are already 2FA-ready) |
+| JWT auth (access+refresh, rotation, blacklist) | CI pipeline, automated backups, perf/CDN tuning |
+| RBAC: 5 seeded roles, runtime-editable permissions | Real media uploads + brochure/PDF download UI |
 | CRM (leads, customers, notes, follow-ups, timeline) | |
 | Quotations (auto-number, tax/discount, **PDF export**) | |
 | Support tickets, Catalog, Portfolio, Blog, Media — real CRUD APIs | |
 | Audit logging, login lockout, throttling | |
 | OpenAPI docs, Docker/Nginx, seed from legacy data | |
 | Automated test suite (13 tests, passing) | |
+| **Next.js 15 + Tailwind public website** (`frontend-nextjs/`) — all pages wired to live APIs, SEO, lead form | |
 
 The legacy static site is preserved under [`legacy/`](./legacy) as design + content reference.
 
@@ -63,6 +64,95 @@ RUN_SEED=true docker compose up --build   # first run seeds; set RUN_SEED=false 
 ```
 Nginx serves on `:80` (uncomment the `:443` block in `nginx/conf.d/primetech.conf`
 after placing certs in `nginx/certs/` — e.g. from Let's Encrypt/Certbot).
+
+## Frontend (Next.js) — run the website
+
+The public website lives in [`frontend-nextjs/`](./frontend-nextjs) (Next.js 15 + TypeScript +
+Tailwind). It reads all content from the backend API, so **start the backend first**.
+
+```bash
+# 1. From the repo root, with the backend already running (see Quickstart above):
+cd frontend-nextjs
+
+# 2. Install dependencies (first time only)
+npm install
+
+# 3. Configure the API URL (per-machine; .env.local is git-ignored)
+cp .env.example .env.local
+# Edit .env.local so the API base URLs point at YOUR backend port.
+# IMPORTANT: this must match the port you ran the backend on
+# (e.g. 8001 — pick a free port if 8000/8009 are taken by another app):
+#   API_BASE_URL=http://127.0.0.1:8001/api/v1
+#   NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8001/api/v1
+
+# 4a. Development (hot reload)
+npm run dev          # -> http://localhost:3000
+
+# 4b. Production build
+npm run build && npm run start    # PORT=3002 npm run start to use another port
+```
+
+- Dev/site URL: `http://localhost:3000`
+- Other scripts: `npm run lint`, `npm run typecheck`
+- Troubleshooting: if pages are blank/unstyled, the backend isn't reachable at the
+  configured API URL, or a stale dev server is running — stop it, `rm -rf .next`, and
+  `npm run dev` again. Full details in [`frontend-nextjs/README.txt`](./frontend-nextjs/README.txt).
+
+### Frontend setup for non-technical users (plain steps)
+
+No coding needed — just copy/paste each line into a terminal (Terminal on Mac, or
+PowerShell on Windows) and press Enter. Do the steps **in order**. You only do the
+"first time" steps once; after that, skip to "Every time you want to run it".
+
+**Before you start — install these once** (download + click through the installer):
+1. **Node.js** (the "LTS" version) — https://nodejs.org
+2. **Docker Desktop** — https://www.docker.com/products/docker-desktop
+3. **Python** — https://www.python.org/downloads
+
+**First time only — set everything up:**
+```bash
+# 1. Start the database
+docker run -d --name primetech-db -p 5544:5432 \
+  -e POSTGRES_USER=primetech -e POSTGRES_PASSWORD=primetech -e POSTGRES_DB=primetech \
+  postgres:16-alpine
+
+# 2. Set up the backend (the "brain" that holds the content)
+cd backend
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env
+python manage.py migrate
+python manage.py seed              # fills the site with starter content
+
+# 3. Set up the website
+cd ../frontend-nextjs
+npm install
+cp .env.example .env.local         # this file tells the site where the backend is
+```
+
+**Every time you want to run it** (two terminal windows):
+```bash
+# Terminal 1 — backend
+docker start primetech-db
+cd backend
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+python manage.py runserver 127.0.0.1:8000
+
+# Terminal 2 — website
+cd frontend-nextjs
+npm run dev
+```
+Then open **http://localhost:3000** in your browser. To stop, press `Ctrl + C` in each terminal.
+
+**If the middle of the page looks empty (only the top menu and bottom footer):**
+the website can't reach the backend. Make sure Terminal 1 (the backend) is running, and
+that the port number in `frontend-nextjs/.env.local` is the **same** as the one in the
+backend command above (both `8000`). Save the file, then in Terminal 2 press `Ctrl + C`
+and run `npm run dev` again.
+
+> Tip: if `8000` is already used by another program, pick another number (e.g. `8010`)
+> in **both** the backend `runserver` command and `.env.local`, then restart both.
 
 ---
 

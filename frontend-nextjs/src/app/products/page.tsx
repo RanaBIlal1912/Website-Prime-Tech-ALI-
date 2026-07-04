@@ -3,9 +3,11 @@ import { PageHero, EmptyState } from "@/components/ui";
 import { Explorer, type ExplorerEntry } from "@/components/Explorer";
 import { ProductCard } from "@/components/cards";
 import { JsonLd } from "@/components/JsonLd";
-import { getProducts } from "@/lib/data";
+import { getProducts, isBackendReachable } from "@/lib/data";
 import { buildMetadata } from "@/lib/seo";
 import { breadcrumbSchema } from "@/lib/schema";
+import { PAGE_HEROES } from "@/lib/hero-images";
+import { DEFAULT_PRODUCTS, toProduct } from "@/lib/home-defaults";
 
 export const revalidate = 300;
 
@@ -14,13 +16,17 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ProductsPage() {
-  const products = await getProducts();
+  const [reachable, products] = await Promise.all([isBackendReachable(), getProducts()]);
 
-  const entries: ExplorerEntry[] = products.map((p) => ({
+  const useDefaults = !reachable && products.length === 0;
+  const items = products.length > 0 ? products : useDefaults ? DEFAULT_PRODUCTS.map(toProduct) : [];
+  const fallbackHref = useDefaults ? "/products" : undefined;
+
+  const entries: ExplorerEntry[] = items.map((p) => ({
     id: p.id,
     category: p.category_name || null,
     searchText: `${p.name} ${p.description} ${p.category_name ?? ""}`.toLowerCase(),
-    node: <ProductCard product={p} />,
+    node: <ProductCard product={p} href={fallbackHref} />,
   }));
 
   return (
@@ -35,10 +41,11 @@ export default async function ProductsPage() {
         eyebrow="Products"
         title="Genuine security & networking hardware"
         subtitle="CCTV cameras, DVRs, network switches and routers — authentic, warranty-backed equipment with full after-sales support."
+        image={PAGE_HEROES.products}
       />
       <section className="section">
         <div className="container-x">
-          {products.length === 0 ? (
+          {items.length === 0 ? (
             <EmptyState title="Products are being updated" hint="Please check back shortly or contact us for a custom quote." />
           ) : (
             <Explorer
